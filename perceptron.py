@@ -24,7 +24,7 @@ input_list = [
     ]
 
 # 訓練パート
-weight = array([1, 0, 0])
+weight = array([0, 0, 0])
 for input_data in input_list:
   weight = train(weight, input_data[0], input_data[1])
 
