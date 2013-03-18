@@ -1,5 +1,5 @@
 public class LookaheadParser extends Parser {
-    public LookaheadParser(LookaheadLexer input) { super(input, 2); }
+    public LookaheadParser(LookaheadLexer input) { super(input, 3); }
 
     public void list() {
         match(LookaheadLexer.LBRACK); elements(); match(LookaheadLexer.RBRACK);
@@ -14,7 +14,14 @@ public class LookaheadParser extends Parser {
 
     void element() {
 
-        if ( LA(1) == LookaheadLexer.NAME && LA(2) == LookaheadLexer.EQUALS) {
+        if ( LA(1) == LookaheadLexer.NAME &&
+                LA(2) == LookaheadLexer.EQUALS &&
+                LA(3) == LookaheadLexer.LBRACK) {
+            match(LookaheadLexer.NAME);
+            match(LookaheadLexer.EQUALS);
+            list();
+        }
+        else if ( LA(1) == LookaheadLexer.NAME && LA(2) == LookaheadLexer.EQUALS) {
             match(LookaheadLexer.NAME);
             match(LookaheadLexer.EQUALS);
             match(LookaheadLexer.NAME);
