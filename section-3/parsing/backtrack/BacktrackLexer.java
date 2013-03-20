@@ -1,4 +1,5 @@
-public class LookaheadLexer extends Lexer {
+public class BacktrackLexer extends Lexer {
+
     public static int NAME = 2;
     public static int COMMA= 3;
     public static int LBRACK=4;
@@ -6,8 +7,10 @@ public class LookaheadLexer extends Lexer {
     public static int EQUALS=6;
     public static String[] tokenNames =
         {"n/a", "<EOF>", "NAME", "COMMA", "LBRACK", "RBRACK", "NAME", "EQUALS"};
+
     public static String getTokenName(int x) {return tokenNames[x]; }
-    public LookaheadLexer(String input) {super(input); }
+
+    public BacktrackLexer(String input) {super(input); }
     boolean isLETTER() { return c>='a' && c <='z' || c >= 'A' && c <= 'Z'; }
 
     public Token nextToken() {

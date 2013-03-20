@@ -1,6 +1,7 @@
 public abstract class Lexer {
     public static final char EOF = (char)-1;
     public static final int EOF_TYPE = 1;
+    public static String[] tokenNames;
     String input;
     int p = 0;
     char c;
@@ -22,5 +23,5 @@ public abstract class Lexer {
     }
 
     public abstract Token nextToken();
-    public abstract String getTokenName(int tokenType);
+    public static String getTokenName(int tokenType) { return ""; };
 }
