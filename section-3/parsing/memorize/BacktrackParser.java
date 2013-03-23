@@ -14,11 +14,10 @@ public class BacktrackParser extends Parser {
     }
 
     public void stat() throws RecognitionException {
-        if (speculate_stat_alt1()) {
-            list(); match(Lexer.EOF_TYPE);
-        }
-        else if (speculate_stat_alt2()) {
-            assign(); match(Lexer.EOF_TYPE);
+        if (speculate_stat_alt2()) {
+            assign();
+        } else if (speculate_stat_alt1()) {
+            list();
         }
         else throw new NoViableAltException("expecting stat found " + LT(1));
 
@@ -27,7 +26,7 @@ public class BacktrackParser extends Parser {
     public boolean speculate_stat_alt1() {
         boolean success = true;
         mark();
-        try {list(); match(Lexer.EOF_TYPE); }
+        try {list();}
         catch (RecognitionException e) { success = false; }
         release();
         return success;
@@ -36,7 +35,7 @@ public class BacktrackParser extends Parser {
     public boolean speculate_stat_alt2() {
         boolean success = true;
         mark();
-        try {assign(); match(Lexer.EOF_TYPE); }
+        try {assign();}
         catch (RecognitionException e) { success = false; }
         release();
         return success;
@@ -84,7 +83,7 @@ public class BacktrackParser extends Parser {
             match(BacktrackLexer.NAME);
         }
         else if ( LA(1) == BacktrackLexer.NAME) match(BacktrackLexer.NAME);
-        else if ( LA(1) == BacktrackLexer.LBRACK) list();
+        else if ( LA(1) == BacktrackLexer.LBRACK) stat();
         else throw new Error("expecting name or list; found " + lookahead);
     }
 }
