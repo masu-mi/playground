@@ -1,6 +1,17 @@
-public class BacktrackParser extends Parser {
-    public BacktrackParser(BacktrackLexer input) { super(input); }
+import java.util.*;
 
+public class BacktrackParser extends Parser {
+
+    private Map<Integer,Integer> list_memo;
+
+    public BacktrackParser(BacktrackLexer input) {
+        super(input);
+        list_memo = new HashMap<Integer, Integer>();
+    }
+
+    public void clearMemo() {
+        list_memo.clear();
+    }
 
     public void stat() throws RecognitionException {
         if (speculate_stat_alt1()) {
@@ -31,7 +42,19 @@ public class BacktrackParser extends Parser {
         return success;
     }
 
-    public void list() {
+
+    public void list() throws RecognitionException {
+        boolean failed = false;
+        int startTokenIndex = index();
+        if (isSpeculating() && alreadyParsedRule(list_memo)) return;
+        try { _list(); }
+        catch (RecognitionException e){ failed = true; throw e; }
+        finally {
+            if (isSpeculating()) memorize(list_memo, startTokenIndex, failed);
+        }
+    }
+
+    public void _list() {
         match(BacktrackLexer.LBRACK); elements(); match(BacktrackLexer.RBRACK);
     }
 

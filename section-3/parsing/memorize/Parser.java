@@ -7,6 +7,7 @@ public abstract class Parser {
     List<Integer> markers;
     List<Token> lookahead;
     int p = 0;
+    public static int FAILED = -1;
 
     public Parser(Lexer input) {
         this.input = input;
@@ -41,6 +42,7 @@ public abstract class Parser {
         if ( p==lookahead.size() && !isSpeculating() ) {
             p=0;
             lookahead.clear();
+            clearMemo();
         }
         sync(1);
     }
@@ -52,4 +54,28 @@ public abstract class Parser {
     }
     public void seek(int index) { p=index; }
     public boolean isSpeculating() { return markers.size() > 0; }
+
+
+    public boolean alreadyParsedRule(Map<Integer, Integer> memorization)
+        throws PreviousParseFailedException
+    {
+        Integer memoI = memorization.get(index());
+        if ( memoI==null ) { return false; }
+        int memo = memoI.intValue();
+        System.out.println("parsed list before at index " + index() +
+                "; skip ahead to token index " + memo + ": " + lookahead.get(memo).text);
+        if (memo==FAILED) throw new PreviousParseFailedException("parsed failed previously");
+        seek(memo);
+        return true;
+    }
+
+    public void memorize(Map<Integer, Integer> memorization,
+            int startTokenIndex, boolean failed)
+    {
+        int stopTokenIndex = failed?FAILED:index();
+        memorization.put(startTokenIndex, stopTokenIndex);
+    }
+    public int index() { return p; }
+
+    public abstract void clearMemo();
 }
