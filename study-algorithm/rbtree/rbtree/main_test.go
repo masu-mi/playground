@@ -21,8 +21,9 @@ func Test_balance(t *testing.T) {
 			return n
 		}(),
 	} {
-		root := balance(node)
-		if valid, act := checkNoBrokenLink(root); !valid {
+		tree := &RBTree{root: findRoot(node)}
+		tree.balance(node)
+		if valid, act := checkNoBrokenLink(tree.root); !valid {
 			t.Errorf("case: %d; tree broken!!(\nat %s)", idx, act)
 		}
 	}
@@ -134,15 +135,40 @@ func Test_Lookup(t *testing.T) {
 }
 
 func Test_findMax(t *testing.T) {
-	tree := &RBTree{
-		root: rootNode(BLACK, 3,
-			parentNode(BLACK, 2, simpleNode(RED, 1), nil),
-			simpleNode(BLACK, 4),
-		),
+	type testCase struct {
+		desc               string
+		top, foundP, found *Node
 	}
-	p, found := findMax(tree.root)
-	assertNode(t, "parent", simpleNode(BLACK, 3), p)
-	assertNode(t, "", simpleNode(BLACK, 4), found)
+	for _, test := range []testCase{
+		testCase{
+			desc: "returns the node has max value and its parent node",
+			top: rootNode(
+				BLACK, 3,
+				parentNode(BLACK, 2, simpleNode(RED, 1), nil),
+				simpleNode(BLACK, 4),
+			),
+			foundP: simpleNode(BLACK, 3),
+			found:  simpleNode(BLACK, 4),
+		},
+		testCase{
+			desc:   "when the node has max value is root, returned parent node is nil",
+			top:    rootNode(BLACK, 3, nil, nil),
+			foundP: nil,
+			found:  simpleNode(BLACK, 3),
+		},
+		testCase{
+			desc:   "when the root node is nil, returned node and its parent are nil",
+			top:    nil,
+			foundP: nil,
+			found:  nil,
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			actP, actFound := findMax(test.top)
+			assertNode(t, "parent", test.foundP, actP)
+			assertNode(t, "", test.found, actFound)
+		})
+	}
 }
 
 func Test_findSubstitue(t *testing.T) {
@@ -315,21 +341,12 @@ func Test_update(t *testing.T) {
 	}
 }
 
-func Test_update_Error(t *testing.T) {
-	for idx, test := range []replaceTestCase{
-		replaceTestCase{
-			root:         rootNode(BLACK, 5, nil, nil),
-			target:       5,
-			newNode:      nil,
-			expectedRoot: nil,
-		},
-	} {
-		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		_, _, e := tree.updateValueWith(p, c, test.newNode)
-		if e == nil {
-			t.Errorf("TEST CASE(%d) failed!", idx)
-		}
+func Test_update_dont_support_with_nil(t *testing.T) {
+	tree := &RBTree{root: rootNode(BLACK, 5, nil, nil)}
+	p, c := find(tree.root, key(5))
+	_, _, e := tree.updateValueWith(p, c, nil)
+	if e == nil {
+		t.Errorf("failed!")
 	}
 }
 

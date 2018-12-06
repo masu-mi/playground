@@ -38,7 +38,7 @@ func (tree *RBTree) Lookup(k Key) (Value, error) {
 
 func (tree *RBTree) Insert(k Key, item Value) (Value, error) {
 	node := tree.set(k, item)
-	tree.root = balance(node)
+	tree.balance(node)
 	return item, nil
 }
 
@@ -78,12 +78,13 @@ func find(n *Node, k Key) (p, cur *Node) {
 	return p, cur
 }
 
-func balance(n *Node) *Node {
+func (tree *RBTree) balance(n *Node) {
 	cur := n
 	for cur.p.color != BLACK {
 		if cur.p == cur {
 			cur.color = BLACK
-			return cur
+			tree.root = cur
+			return
 		}
 		ggp := cur.p.p
 		isLeft := ggp.isLeftChild()
@@ -98,7 +99,7 @@ func balance(n *Node) *Node {
 			cur.p, ggp.p.r = ggp.p, cur
 		}
 	}
-	return findRoot(cur)
+	tree.root = findRoot(cur)
 }
 
 func setColor(n *Node) {
@@ -239,6 +240,9 @@ func findSubstitue(n *Node) (p, cur *Node) {
 
 func findMax(n *Node) (p, cur *Node) {
 	cur = n
+	if n == nil {
+		return nil, nil
+	}
 	for cur.r != nil {
 		p = cur
 		cur = cur.r
