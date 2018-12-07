@@ -534,7 +534,8 @@ func Test_recoverRank_Left(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		act := tree.recoverRank(test.parent, test.t)
+		tree.recoverRank(test.parent, test.t)
+		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
 		}
@@ -702,7 +703,8 @@ func Test_recoverRank_Right(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		act := tree.recoverRank(test.parent, test.t)
+		tree.recoverRank(test.parent, test.t)
+		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
 		}

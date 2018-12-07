@@ -145,7 +145,7 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 	if cur.l == nil && cur.r == nil {
 		deletedColor, linkT := tree.replaceWith(p, cur, nil)
 		if linkT != root && deletedColor == BLACK {
-			tree.root = tree.recoverRank(p, linkT)
+			tree.recoverRank(p, linkT)
 		}
 	} else {
 		srcP, srcCur := findSubstitue(cur)
@@ -161,11 +161,11 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 		}
 		if deletedColor == BLACK {
 			if srcP.isRoot() {
-				tree.root = tree.recoverRank(tree.root, linkT)
+				tree.recoverRank(tree.root, linkT)
 			} else if srcP == cur {
-				tree.root = tree.recoverRank(srcCur, linkT)
+				tree.recoverRank(srcCur, linkT)
 			} else {
-				tree.root = tree.recoverRank(srcP, linkT)
+				tree.recoverRank(srcP, linkT)
 			}
 		}
 	}
@@ -250,24 +250,23 @@ func findMax(n *Node) (p, cur *Node) {
 	return p, cur
 }
 
-func (tree *RBTree) recoverRank(p *Node, linkT linkType) *Node {
+func (tree *RBTree) recoverRank(p *Node, linkT linkType) {
 	switch linkT {
 	case left:
-		return tree.recoverRankLeft(p)
+		tree.recoverRankLeft(p)
 	case right:
-		return tree.recoverRankRight(p)
+		tree.recoverRankRight(p)
 	case root:
 		p.color = BLACK
-		return p
 	default:
 		if p != nil {
 			panic("invalid attr p is not nil")
 		}
-		return nil
 	}
+	return
 }
 
-func (tree *RBTree) recoverRankLeft(p *Node) *Node {
+func (tree *RBTree) recoverRankLeft(p *Node) {
 	pp := p.p
 	isRoot := p.isRoot()
 	isLeft := p.isLeftChild()
@@ -294,18 +293,22 @@ func (tree *RBTree) recoverRankLeft(p *Node) *Node {
 				} else {
 					t = right
 				}
-				return tree.recoverRank(p.p, t)
+				tree.recoverRank(p.p, t)
+				return
 			}
 		}
 	case RED:
 		new := rotateL(p)
 		new.l.color, new.color = RED, BLACK
 		tree.replaceWith(pp, p, new)
-		return tree.recoverRankLeft(new.l)
+		tree.recoverRankLeft(new.l)
+		return
 	}
-	return findRoot(p)
+	tree.root = findRoot(p)
+	return
 }
-func (tree *RBTree) recoverRankRight(p *Node) *Node {
+
+func (tree *RBTree) recoverRankRight(p *Node) {
 
 	pp := p.p
 	isRoot := p.isRoot()
@@ -334,14 +337,17 @@ func (tree *RBTree) recoverRankRight(p *Node) *Node {
 				} else {
 					t = right
 				}
-				return tree.recoverRank(p.p, t)
+				tree.recoverRank(p.p, t)
+				return
 			}
 		}
 	case RED:
 		new := rotateR(p)
 		new.r.color, new.color = RED, BLACK
 		tree.replaceWith(pp, p, new)
-		return tree.recoverRankRight(new.r)
+		tree.recoverRankRight(new.r)
+		return
 	}
-	return findRoot(p)
+	tree.root = findRoot(p)
+	return
 }
