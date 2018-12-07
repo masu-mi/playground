@@ -5,30 +5,6 @@ import (
 	"testing"
 )
 
-func Test_balance(t *testing.T) {
-	for idx, node := range []*Node{
-		rootNode(RED, 1, nil, nil),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			r := parentNode(BLACK, 0, parentNode(RED, 10, nil, n), nil)
-			r.p = r
-			return n
-		}(),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			r := parentNode(BLACK, 0, nil, parentNode(RED, 10, nil, n))
-			r.p = r
-			return n
-		}(),
-	} {
-		tree := &RBTree{root: findRoot(node)}
-		tree.balance(node)
-		if valid, act := checkNoBrokenLink(tree.root); !valid {
-			t.Errorf("case: %d; tree broken!!(\nat %s)", idx, act)
-		}
-	}
-}
-
 func Test_Insert(t *testing.T) {
 	type testCase struct {
 		input    []int
@@ -114,6 +90,28 @@ func Test_Insert(t *testing.T) {
 	}
 }
 
+func Test_balance(t *testing.T) {
+	for idx, node := range []*Node{
+		rootNode(RED, 1, nil, nil),
+		func() *Node {
+			n := simpleNode(RED, 20)
+			rootNode(BLACK, 0, parentNode(RED, 10, nil, n), nil)
+			return n
+		}(),
+		func() *Node {
+			n := simpleNode(RED, 20)
+			rootNode(BLACK, 0, nil, parentNode(RED, 10, nil, n))
+			return n
+		}(),
+	} {
+		tree := &RBTree{root: findRoot(node)}
+		tree.balance(node)
+		if valid, act := checkNoBrokenLink(tree.root); !valid {
+			t.Errorf("case: %d; tree broken!!(\nat %s)", idx, act)
+		}
+	}
+}
+
 func Test_Lookup(t *testing.T) {
 	tree := &RBTree{}
 	tree.Insert(key(10), "found")
@@ -131,6 +129,50 @@ func Test_Lookup(t *testing.T) {
 	}
 	if v != nil {
 		t.Errorf("invalid value was returnd(%v)!!\n    %s", v, tree.root)
+	}
+}
+
+func Test_find(t *testing.T) {
+	type testCase struct {
+		desc               string
+		key                int
+		top, foundP, found *Node
+	}
+	for _, test := range []testCase{
+		testCase{
+			desc:   "returns the node has passed key",
+			key:    10,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 5),
+			found:  simpleNode(BLACK, 10),
+		},
+		testCase{
+			desc:   "when found node is root, return nil as its parent",
+			key:    5,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: nil,
+			found:  simpleNode(BLACK, 5),
+		},
+		testCase{
+			desc:   "when not found has passed key, found node is nil",
+			key:    0,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 5),
+			found:  nil,
+		},
+		testCase{
+			desc:   "when not found has passed key, found parent node is able to be proper place",
+			key:    8,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 10),
+			found:  nil,
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			actP, actFound := find(test.top, key(test.key))
+			assertNode(t, "parent", test.foundP, actP)
+			assertNode(t, "", test.found, actFound)
+		})
 	}
 }
 
