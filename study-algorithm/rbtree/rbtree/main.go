@@ -149,9 +149,9 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 	}
 
 	if cur.l == nil && cur.r == nil {
-		deletedColor, linkT := tree.replaceWith(p, cur, nil)
-		if linkT != root && deletedColor == BLACK {
-			tree.recoverRank(p, linkT)
+		deletedColor, pl := tree.replaceWith(p, cur, nil)
+		if deletedColor == BLACK {
+			tree.recoverRank(pl)
 		}
 	} else {
 		srcP, srcCur := findSubstitue(cur)
@@ -160,27 +160,21 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 		if srcCur != nil {
 			ssrcCur = srcCur.l
 		}
-		deletedColor, linkT := tree.replaceWith(srcP, srcCur, ssrcCur)
-		_, _, e := tree.updateValueWith(p, cur, srcCur)
+		deletedColor, pl := tree.replaceWith(srcP, srcCur, ssrcCur)
+		e := tree.updateValueWith(p, cur, srcCur)
 		if e != nil {
 			panic("not supported")
 		}
 		if deletedColor == BLACK {
-			if srcP.isRoot() {
-				tree.recoverRank(tree.root, linkT)
-			} else if srcP == cur {
-				tree.recoverRank(srcCur, linkT)
-			} else {
-				tree.recoverRank(srcP, linkT)
-			}
+			tree.recoverRank(pl)
 		}
 	}
 	return cur.value, nil
 }
 
-func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, placeType, error) {
+func (tree *RBTree) updateValueWith(p, old, new *Node) error {
 	if new == nil {
-		return RED, root, fmt.Errorf("invalid input; new attr is nil")
+		return fmt.Errorf("invalid input; new attr is nil")
 	}
 	new.l, new.r = old.l, old.r
 	if new.l != nil {
@@ -189,21 +183,30 @@ func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, placeType, error)
 	if new.r != nil {
 		new.r.p = new
 	}
-	c, t := tree.replaceWith(p, old, new)
-	return c, t, nil
+	_, _ = tree.replaceWith(p, old, new)
+	return nil
 }
 
-func (tree *RBTree) replaceWith(p, old, new *Node) (deleted Color, t placeType) {
-	pl := tree.place(p, old)
+func (tree *RBTree) replaceWith(p, old, new *Node) (lost Color, pl place) {
+	pl = tree.place(p, old)
 	if new == nil {
-		deleted = pl.Node().color
+		lost = pl.Node().color
 	} else {
-		deleted = new.color
+		lost = new.color
 		new.color = pl.Node().color
 	}
 	pl.setOnPlace(new)
-	t = pl.t
 	return
+}
+
+func (tree *RBTree) place(p, n *Node) place {
+	if p == nil || n.isRoot() {
+		return place{t: root, tree: tree, parent: nil}
+	} else if n.isLeftChild() {
+		return place{t: left, tree: nil, parent: p}
+	} else {
+		return place{t: right, tree: nil, parent: p}
+	}
 }
 
 func (p place) Node() *Node {
@@ -218,33 +221,38 @@ func (p place) Node() *Node {
 	return nil
 }
 
-func (tree *RBTree) place(p, n *Node) place {
-	if p == nil || n.isRoot() {
-		return place{t: root, tree: tree, parent: nil}
-	} else if n.isLeftChild() {
-		return place{t: left, tree: nil, parent: p}
-	} else {
-		return place{t: right, tree: nil, parent: p}
-	}
-}
-
 func (p place) setOnPlace(n *Node) {
+	var link **Node
 	switch p.t {
 	case root:
-		p.tree.root = n
+		link = &(p.tree.root)
 	case left:
-		p.parent.l = n
+		link = &(p.parent.l)
 	case right:
-		p.parent.r = n
+		link = &(p.parent.r)
 	}
+
 	if n == nil {
+		(*link) = nil
 		return
+	} else if (*link) == nil {
+		*link = n
+	} else {
+		(*link).copyFrom(n)
 	}
+
+	if (*link).l != nil {
+		(*link).l.p = (*link)
+	}
+	if (*link).r != nil {
+		(*link).r.p = (*link)
+	}
+
 	if p.t == root {
-		n.p = n
+		(*link).p = (*link)
 		return
 	}
-	n.p = p.parent
+	(*link).p = p.parent
 	return
 }
 
@@ -271,26 +279,23 @@ func findMax(n *Node) (p, cur *Node) {
 	return p, cur
 }
 
-func (tree *RBTree) recoverRank(p *Node, linkT placeType) {
-	switch linkT {
+func (tree *RBTree) recoverRank(pl place) {
+	switch pl.t {
 	case left:
-		tree.recoverRankLeft(p)
+		tree.recoverRankLeft(pl.parent)
 	case right:
-		tree.recoverRankRight(p)
+		tree.recoverRankRight(pl.parent)
 	case root:
-		p.color = BLACK
+		pl.tree.root.color = BLACK
 	default:
-		if p != nil {
-			panic("invalid attr p is not nil")
-		}
+		panic("invalid attr place's t")
 	}
 	return
 }
 
 func (tree *RBTree) recoverRankLeft(p *Node) {
 	pp := p.p
-	isRoot := p.isRoot()
-	isLeft := p.isLeftChild()
+	pl := tree.place(pp, p)
 
 	topColor := p.color
 	switch p.r.Color() {
@@ -306,15 +311,7 @@ func (tree *RBTree) recoverRankLeft(p *Node) {
 		} else {
 			p.color, p.r.color = BLACK, RED
 			if topColor == BLACK {
-				var t placeType
-				if isRoot {
-					t = root
-				} else if isLeft {
-					t = left
-				} else {
-					t = right
-				}
-				tree.recoverRank(p.p, t)
+				tree.recoverRank(pl)
 				return
 			}
 		}
@@ -332,8 +329,7 @@ func (tree *RBTree) recoverRankLeft(p *Node) {
 func (tree *RBTree) recoverRankRight(p *Node) {
 
 	pp := p.p
-	isRoot := p.isRoot()
-	isLeft := p.isLeftChild()
+	pl := tree.place(pp, p)
 
 	topColor := p.color
 	switch p.l.Color() {
@@ -350,15 +346,7 @@ func (tree *RBTree) recoverRankRight(p *Node) {
 		} else {
 			p.color, p.l.color = BLACK, RED
 			if topColor == BLACK {
-				var t placeType
-				if isRoot {
-					t = root
-				} else if isLeft {
-					t = left
-				} else {
-					t = right
-				}
-				tree.recoverRank(p.p, t)
+				tree.recoverRank(pl)
 				return
 			}
 		}

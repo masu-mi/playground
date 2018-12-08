@@ -32,6 +32,13 @@ func (n *Node) EqualAsSubTree(o *Node) bool {
 		n.r.EqualAsSubTree(o.r)
 }
 
+func (n *Node) copyFrom(o *Node) {
+	n.color = o.color
+	n.k = o.k
+	n.value = o.value
+	n.l, n.r = o.l, o.r
+}
+
 func (n *Node) Color() Color {
 	if n == nil {
 		return BLACK

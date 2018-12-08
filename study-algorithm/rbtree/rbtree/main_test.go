@@ -369,12 +369,18 @@ func Test_replace(t *testing.T) {
 			newNode:      simpleNode(BLACK, 3),
 			expectedRoot: rootNode(BLACK, 3, nil, nil),
 		},
+
 		replaceTestCase{
-			root:         rootNode(BLACK, 5, simpleNode(RED, 2), simpleNode(RED, 10)),
+			root: rootNode(
+				BLACK, 5,
+				simpleNode(RED, 2),
+				simpleNode(RED, 10),
+			),
 			target:       5,
 			newNode:      simpleNode(BLACK, 3),
 			expectedRoot: rootNode(BLACK, 3, nil, nil),
 		},
+
 		replaceTestCase{
 			root:         rootNode(BLACK, 5, simpleNode(RED, 2), simpleNode(RED, 10)),
 			target:       2,
@@ -448,7 +454,7 @@ func Test_update(t *testing.T) {
 	} {
 		tree := &RBTree{root: test.root}
 		p, c := find(tree.root, key(test.target))
-		_, _, e := tree.updateValueWith(p, c, test.newNode)
+		e := tree.updateValueWith(p, c, test.newNode)
 		if e != nil {
 			t.Errorf("TEST CASE(%d) failed! err:%s", idx, e)
 		}
@@ -461,7 +467,7 @@ func Test_update(t *testing.T) {
 func Test_update_dont_support_with_nil(t *testing.T) {
 	tree := &RBTree{root: rootNode(BLACK, 5, nil, nil)}
 	p, c := find(tree.root, key(5))
-	_, _, e := tree.updateValueWith(p, c, nil)
+	e := tree.updateValueWith(p, c, nil)
 	if e == nil {
 		t.Errorf("failed!")
 	}
@@ -651,7 +657,12 @@ func Test_recoverRank_Left(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		tree.recoverRank(test.parent, test.t)
+		pl := place{
+			t:      test.t,
+			tree:   tree,
+			parent: test.parent,
+		}
+		tree.recoverRank(pl)
 		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
@@ -820,7 +831,12 @@ func Test_recoverRank_Right(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		tree.recoverRank(test.parent, test.t)
+		pl := place{
+			t:      test.t,
+			tree:   tree,
+			parent: test.parent,
+		}
+		tree.recoverRank(pl)
 		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
