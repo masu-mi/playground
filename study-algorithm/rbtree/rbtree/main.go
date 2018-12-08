@@ -51,6 +51,7 @@ func (tree *RBTree) set(k Key, item Value) *Node {
 	cur = &Node{color: RED, k: k, value: item, p: p}
 	if p == nil {
 		cur.p = cur
+		tree.root = cur
 	} else {
 		if k.CompareTo(p.k) < 0 {
 			p.l = cur
@@ -83,23 +84,13 @@ func (tree *RBTree) balance(n *Node) {
 	for cur.p.color != BLACK {
 		if cur.p == cur {
 			cur.color = BLACK
-			tree.root = cur
 			return
 		}
 		ggp := cur.p.p
-		isLeft := ggp.isLeftChild()
-		isRoot := ggp.p == ggp
-		cur = rotate(cur)
+		rotate(cur)
+		cur = ggp
 		setColor(cur)
-		if isRoot {
-			cur.p = cur
-		} else if isLeft {
-			cur.p, ggp.p.l = ggp.p, cur
-		} else {
-			cur.p, ggp.p.r = ggp.p, cur
-		}
 	}
-	tree.root = findRoot(cur)
 }
 
 func setColor(n *Node) {
@@ -112,18 +103,18 @@ func setColor(n *Node) {
 	}
 }
 
-func rotate(n *Node) *Node {
+func rotate(n *Node) {
 	if n.isLeftChild() {
 		if n.p.isLeftChild() {
-			return rotateR(n.p.p)
+			rotateR(n.p.p)
 		} else { // !n.p.isLeftChild()
-			return rotateRL(n.p.p)
+			rotateRL(n.p.p)
 		}
 	} else { // !n.isLeftChild()
 		if n.p.isLeftChild() {
-			return rotateLR(n.p.p)
+			rotateLR(n.p.p)
 		} else { // !n.p.isLeftChild()
-			return rotateL(n.p.p)
+			rotateL(n.p.p)
 		}
 	}
 }
@@ -240,13 +231,11 @@ func (tree *RBTree) recoverRankLeft(p *Node) {
 	switch p.r.Color() {
 	case BLACK:
 		if p.r.l.Color() == RED {
-			new := rotateRL(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateRL(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else if p.r.r.Color() == RED {
-			new := rotateL(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateL(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else {
 			p.color, p.r.color = BLACK, RED
 			if topColor == BLACK {
@@ -255,10 +244,9 @@ func (tree *RBTree) recoverRankLeft(p *Node) {
 			}
 		}
 	case RED:
-		new := rotateL(p)
-		new.l.color, new.color = RED, BLACK
-		tree.replaceWith(pp, p, new)
-		tree.recoverRankLeft(new.l)
+		rotateL(p)
+		p.l.color, p.color = RED, BLACK
+		tree.recoverRankLeft(p.l)
 		return
 	}
 	return
@@ -273,14 +261,11 @@ func (tree *RBTree) recoverRankRight(p *Node) {
 	switch p.l.Color() {
 	case BLACK:
 		if p.l.r.Color() == RED {
-			new := rotateLR(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
-
+			rotateLR(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else if p.l.l.Color() == RED {
-			new := rotateR(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateR(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else {
 			p.color, p.l.color = BLACK, RED
 			if topColor == BLACK {
@@ -289,10 +274,9 @@ func (tree *RBTree) recoverRankRight(p *Node) {
 			}
 		}
 	case RED:
-		new := rotateR(p)
-		new.r.color, new.color = RED, BLACK
-		tree.replaceWith(pp, p, new)
-		tree.recoverRankRight(new.r)
+		rotateR(p)
+		p.r.color, p.color = RED, BLACK
+		tree.recoverRankRight(p.r)
 		return
 	}
 	return

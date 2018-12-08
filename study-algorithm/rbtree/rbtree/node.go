@@ -80,7 +80,7 @@ func findRoot(n *Node) *Node {
 	return cur
 }
 
-func rotateL(n *Node) *Node {
+func rotateL(n *Node) {
 	p := &Node{
 		color: n.r.color,
 		k:     n.r.k,
@@ -106,9 +106,9 @@ func rotateL(n *Node) *Node {
 	if p.l.r != nil {
 		n.l.r.p = n.l
 	}
-	return n
+	return
 }
-func rotateR(n *Node) *Node {
+func rotateR(n *Node) {
 	p := &Node{
 		color: n.l.color,
 		k:     n.l.k,
@@ -134,16 +134,16 @@ func rotateR(n *Node) *Node {
 	if n.r.r != nil {
 		n.r.r.p = n.r
 	}
-	return n
+	return
 }
-func rotateLR(n *Node) *Node {
-	p := rotateL(n.l)
-	n.l, p.p = p, n
-	return rotateR(n)
+func rotateLR(n *Node) {
+	rotateL(n.l)
+	rotateR(n)
+	return
 }
 
-func rotateRL(n *Node) *Node {
-	p := rotateR(n.r)
-	n.r, p.p = p, n
-	return rotateL(n)
+func rotateRL(n *Node) {
+	rotateR(n.r)
+	rotateL(n)
+	return
 }
