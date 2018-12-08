@@ -128,13 +128,19 @@ func rotate(n *Node) *Node {
 	}
 }
 
-type linkType int
+type placeType int
 
 const (
-	root linkType = 0 + iota
+	root placeType = 0 + iota
 	left
 	right
 )
+
+type place struct {
+	t      placeType
+	tree   *RBTree
+	parent *Node
+}
 
 func (tree *RBTree) Delete(k Key) (Value, error) {
 	p, cur := find(tree.root, k)
@@ -172,7 +178,7 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 	return cur.value, nil
 }
 
-func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, linkType, error) {
+func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, placeType, error) {
 	if new == nil {
 		return RED, root, fmt.Errorf("invalid input; new attr is nil")
 	}
@@ -187,44 +193,59 @@ func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, linkType, error) 
 	return c, t, nil
 }
 
-func (tree *RBTree) replaceWith(p, old, new *Node) (deleted Color, t linkType) {
-	link, t := tree.linkPoint(p, old)
+func (tree *RBTree) replaceWith(p, old, new *Node) (deleted Color, t placeType) {
+	pl := tree.place(p, old)
 	if new == nil {
-		deleted = (*link).color
+		deleted = pl.Node().color
 	} else {
 		deleted = new.color
-		new.color = (*link).color
+		new.color = pl.Node().color
 	}
-	setLink(link, new, p)
+	pl.setOnPlace(new)
+	t = pl.t
 	return
 }
 
-func (tree *RBTree) linkPoint(p, c *Node) (**Node, linkType) {
-	if p == nil || c.isRoot() {
-		return &(tree.root), root
-	} else if c.isLeftChild() {
-		return &(p.l), left
+func (p place) Node() *Node {
+	switch p.t {
+	case root:
+		return p.tree.root
+	case left:
+		return p.parent.l
+	case right:
+		return p.parent.r
+	}
+	return nil
+}
+
+func (tree *RBTree) place(p, n *Node) place {
+	if p == nil || n.isRoot() {
+		return place{t: root, tree: tree, parent: nil}
+	} else if n.isLeftChild() {
+		return place{t: left, tree: nil, parent: p}
 	} else {
-		return &(p.r), right
+		return place{t: right, tree: nil, parent: p}
 	}
 }
 
-func setLink(link **Node, c, p *Node) {
-	isRoot := (*link).isRoot()
-	*link = c
-	if c == nil { // a leaf doesn't know its parent...
+func (p place) setOnPlace(n *Node) {
+	switch p.t {
+	case root:
+		p.tree.root = n
+	case left:
+		p.parent.l = n
+	case right:
+		p.parent.r = n
+	}
+	if n == nil {
 		return
 	}
-	if isRoot {
-		c.p = c
-		return
-	} else if p != nil {
-		c.p = p
-		return
-	} else { // p == nil represents link is root
-		c.p = c
+	if p.t == root {
+		n.p = n
 		return
 	}
+	n.p = p.parent
+	return
 }
 
 func findSubstitue(n *Node) (p, cur *Node) {
@@ -250,7 +271,7 @@ func findMax(n *Node) (p, cur *Node) {
 	return p, cur
 }
 
-func (tree *RBTree) recoverRank(p *Node, linkT linkType) {
+func (tree *RBTree) recoverRank(p *Node, linkT placeType) {
 	switch linkT {
 	case left:
 		tree.recoverRankLeft(p)
@@ -285,7 +306,7 @@ func (tree *RBTree) recoverRankLeft(p *Node) {
 		} else {
 			p.color, p.r.color = BLACK, RED
 			if topColor == BLACK {
-				var t linkType
+				var t placeType
 				if isRoot {
 					t = root
 				} else if isLeft {
@@ -329,7 +350,7 @@ func (tree *RBTree) recoverRankRight(p *Node) {
 		} else {
 			p.color, p.l.color = BLACK, RED
 			if topColor == BLACK {
-				var t linkType
+				var t placeType
 				if isRoot {
 					t = root
 				} else if isLeft {

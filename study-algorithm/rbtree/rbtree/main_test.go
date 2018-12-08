@@ -281,25 +281,30 @@ func Test_findMax(t *testing.T) {
 
 func Test_findSubstitue(t *testing.T) {
 	type testCase struct {
+		desc                                 string
 		input, expectedParent, expectedFound *Node
 	}
 	for idx, test := range []testCase{
 		testCase{
+			desc:           "if target have no child, returns nil as substitute and target as parent",
 			input:          rootNode(BLACK, 5, nil, nil),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  nil,
 		},
 		testCase{
+			desc:           "if target have no left child, returns right child as substitute and target as parent",
 			input:          rootNode(BLACK, 5, nil, simpleNode(RED, 8)),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  simpleNode(RED, 8),
 		},
 		testCase{
+			desc:           "if target have left child, returns max node exists under left child as substitute",
 			input:          rootNode(BLACK, 5, simpleNode(RED, 3), nil),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  simpleNode(RED, 3),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 5,
 				simpleNode(RED, 3),
@@ -309,6 +314,7 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(RED, 3),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 5,
 				parentNode(RED, 3, simpleNode(BLACK, 2), simpleNode(BLACK, 4)),
@@ -318,6 +324,7 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(BLACK, 4),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 6,
 				parentNode(
@@ -333,9 +340,11 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(RED, 5),
 		},
 	} {
-		actP, actF := findSubstitue(test.input)
-		assertNode(t, fmt.Sprintf("parent(idx: %d)", idx), test.expectedParent, actP)
-		assertNode(t, fmt.Sprintf("found(idx: %d)", idx), test.expectedFound, actF)
+		t.Run(test.desc, func(t *testing.T) {
+			actP, actF := findSubstitue(test.input)
+			assertNode(t, fmt.Sprintf("parent(idx: %d)", idx), test.expectedParent, actP)
+			assertNode(t, fmt.Sprintf("found(idx: %d)", idx), test.expectedFound, actF)
+		})
 	}
 }
 
@@ -461,7 +470,7 @@ func Test_update_dont_support_with_nil(t *testing.T) {
 func Test_recoverRank_Left(t *testing.T) {
 	type testCase struct {
 		parent   *Node
-		t        linkType
+		t        placeType
 		expected *Node
 	}
 	for idx, test := range []testCase{
@@ -653,7 +662,7 @@ func Test_recoverRank_Left(t *testing.T) {
 func Test_recoverRank_Right(t *testing.T) {
 	type testCase struct {
 		parent   *Node
-		t        linkType
+		t        placeType
 		expected *Node
 	}
 	for idx, test := range []testCase{
