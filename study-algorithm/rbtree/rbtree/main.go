@@ -37,8 +37,8 @@ func (tree *RBTree) Lookup(k Key) (Value, error) {
 }
 
 func (tree *RBTree) Insert(k Key, item Value) (Value, error) {
-	node := tree.set(k, item)
-	tree.balance(node)
+	created := tree.set(k, item)
+	tree.recoverBalance(created)
 	return item, nil
 }
 
@@ -79,17 +79,14 @@ func find(n *Node, k Key) (p, cur *Node) {
 	return p, cur
 }
 
-func (tree *RBTree) balance(n *Node) {
+func (tree *RBTree) recoverBalance(n *Node) {
 	cur := n
 	for cur.p.color != BLACK {
 		if cur.p == cur {
 			cur.color = BLACK
 			return
 		}
-		ggp := cur.p.p
-		rotate(cur)
-		cur = ggp
-		setColor(cur)
+		cur = balance(cur)
 	}
 }
 
@@ -103,20 +100,23 @@ func setColor(n *Node) {
 	}
 }
 
-func rotate(n *Node) {
+func balance(n *Node) *Node {
+	gp := n.p.p
 	if n.isLeftChild() {
 		if n.p.isLeftChild() {
-			rotateR(n.p.p)
+			rotateR(gp)
 		} else { // !n.p.isLeftChild()
-			rotateRL(n.p.p)
+			rotateRL(gp)
 		}
 	} else { // !n.isLeftChild()
 		if n.p.isLeftChild() {
-			rotateLR(n.p.p)
+			rotateLR(gp)
 		} else { // !n.p.isLeftChild()
-			rotateL(n.p.p)
+			rotateL(gp)
 		}
 	}
+	setColor(gp)
+	return gp
 }
 
 func (tree *RBTree) Delete(k Key) (Value, error) {

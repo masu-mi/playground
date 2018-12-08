@@ -90,7 +90,7 @@ func Test_Insert(t *testing.T) {
 	}
 }
 
-func Test_balance(t *testing.T) {
+func Test_recoverBalance(t *testing.T) {
 	type testCase struct {
 		desc string
 		node *Node
@@ -167,7 +167,7 @@ func Test_balance(t *testing.T) {
 	} {
 		t.Run(test.desc, func(t *testing.T) {
 			tree := &RBTree{root: findRoot(test.node)}
-			tree.balance(test.node)
+			tree.recoverBalance(test.node)
 			if tree.root.color != BLACK {
 				t.Errorf("tree.root.color isn't BLACK!!(\n%s)", tree.root)
 			}
