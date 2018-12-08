@@ -91,24 +91,90 @@ func Test_Insert(t *testing.T) {
 }
 
 func Test_balance(t *testing.T) {
-	for idx, node := range []*Node{
-		rootNode(RED, 1, nil, nil),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			rootNode(BLACK, 0, parentNode(RED, 10, nil, n), nil)
-			return n
-		}(),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			rootNode(BLACK, 0, nil, parentNode(RED, 10, nil, n))
-			return n
-		}(),
+	type testCase struct {
+		desc string
+		node *Node
+	}
+	for _, test := range []testCase{
+		testCase{
+			desc: "root node balanced(its color will be made black)",
+			node: rootNode(RED, 1, nil, nil),
+		},
+		testCase{
+			desc: "rotateR(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					parentNode(
+						RED, -200,
+						n,
+						simpleNode(BLACK, -300),
+					),
+					simpleNode(BLACK, -400),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateLR(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					parentNode(
+						RED, -200,
+						simpleNode(BLACK, -300),
+						n,
+					),
+					simpleNode(BLACK, -400),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateRL(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					simpleNode(BLACK, -200),
+					parentNode(
+						RED, -300,
+						n,
+						simpleNode(BLACK, -400),
+					),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateL(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					simpleNode(BLACK, -200),
+					parentNode(
+						RED, -300,
+						simpleNode(BLACK, -400),
+						n,
+					),
+				)
+				return n
+			}(),
+		},
 	} {
-		tree := &RBTree{root: findRoot(node)}
-		tree.balance(node)
-		if valid, act := checkNoBrokenLink(tree.root); !valid {
-			t.Errorf("case: %d; tree broken!!(\nat %s)", idx, act)
-		}
+		t.Run(test.desc, func(t *testing.T) {
+			tree := &RBTree{root: findRoot(test.node)}
+			tree.balance(test.node)
+			if tree.root.color != BLACK {
+				t.Errorf("tree.root.color isn't BLACK!!(\n%s)", tree.root)
+			}
+			if valid, act := checkNoBrokenLink(tree.root); !valid {
+				t.Errorf("tree is broken!!(\nat %s)", act)
+			}
+		})
 	}
 }
 
