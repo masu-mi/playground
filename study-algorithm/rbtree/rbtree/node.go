@@ -32,6 +32,13 @@ func (n *Node) EqualAsSubTree(o *Node) bool {
 		n.r.EqualAsSubTree(o.r)
 }
 
+func (n *Node) copyFrom(o *Node) {
+	n.color = o.color
+	n.k = o.k
+	n.value = o.value
+	n.l, n.r = o.l, o.r
+}
+
 func (n *Node) Color() Color {
 	if n == nil {
 		return BLACK
@@ -73,7 +80,7 @@ func findRoot(n *Node) *Node {
 	return cur
 }
 
-func rotateL(n *Node) *Node {
+func rotateL(n *Node) {
 	p := &Node{
 		color: n.r.color,
 		k:     n.r.k,
@@ -87,19 +94,21 @@ func rotateL(n *Node) *Node {
 		},
 		r: n.r.r,
 	}
-	p.l.p = p
-	if p.r != nil {
-		p.r.p = p
+	n.copyFrom(p)
+
+	n.l.p = n
+	if n.r != nil {
+		n.r.p = n
 	}
-	if p.l.l != nil {
-		p.l.l.p = p.l
+	if n.l.l != nil {
+		n.l.l.p = n.l
 	}
 	if p.l.r != nil {
-		p.l.r.p = p.l
+		n.l.r.p = n.l
 	}
-	return p
+	return
 }
-func rotateR(n *Node) *Node {
+func rotateR(n *Node) {
 	p := &Node{
 		color: n.l.color,
 		k:     n.l.k,
@@ -113,26 +122,28 @@ func rotateR(n *Node) *Node {
 			r:     n.r,
 		},
 	}
-	p.r.p = p
-	if p.l != nil {
-		p.l.p = p
+	n.copyFrom(p)
+
+	n.r.p = n
+	if n.l != nil {
+		n.l.p = n
 	}
-	if p.r.l != nil {
-		p.r.l.p = p.r
+	if n.r.l != nil {
+		n.r.l.p = n.r
 	}
-	if p.r.r != nil {
-		p.r.r.p = p.r
+	if n.r.r != nil {
+		n.r.r.p = n.r
 	}
-	return p
+	return
 }
-func rotateLR(n *Node) *Node {
-	p := rotateL(n.l)
-	n.l, p.p = p, n
-	return rotateR(n)
+func rotateLR(n *Node) {
+	rotateL(n.l)
+	rotateR(n)
+	return
 }
 
-func rotateRL(n *Node) *Node {
-	p := rotateR(n.r)
-	n.r, p.p = p, n
-	return rotateL(n)
+func rotateRL(n *Node) {
+	rotateR(n.r)
+	rotateL(n)
+	return
 }

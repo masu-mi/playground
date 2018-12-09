@@ -29,76 +29,56 @@ type RBTree struct {
 }
 
 func (tree *RBTree) Lookup(k Key) (Value, error) {
-	_, cur := find(tree.root, k)
-	if cur != nil {
+	pl := tree.find(k)
+	if cur := pl.Node(); cur != nil {
 		return cur.value, nil
 	}
 	return nil, NotFoundErr
 }
 
 func (tree *RBTree) Insert(k Key, item Value) (Value, error) {
-	node := tree.set(k, item)
-	tree.root = balance(node)
+	created := tree.set(k, item)
+	tree.recoverBalance(created)
 	return item, nil
 }
 
 func (tree *RBTree) set(k Key, item Value) *Node {
-	p, cur := find(tree.root, k)
-	if cur != nil {
+	pl := tree.find(k)
+	if cur := pl.Node(); cur != nil {
 		cur.value = item
 		return cur
 	}
-	cur = &Node{color: RED, k: k, value: item, p: p}
-	if p == nil {
-		cur.p = cur
-	} else {
-		if k.CompareTo(p.k) < 0 {
-			p.l = cur
+	cur := &Node{color: RED, k: k, value: item}
+	pl.setOnPlace(cur)
+	return cur
+}
+
+func (tree *RBTree) find(k Key) place {
+	cur := place{t: root, tree: tree, parent: nil}
+	for cur.Node() != nil {
+		if diff := k.CompareTo(cur.Node().k); diff == 0 {
+			return cur
 		} else {
-			p.r = cur
+			cur = place{tree: tree, parent: cur.Node()}
+			if diff < 0 {
+				cur.t = left
+			} else {
+				cur.t = right
+			}
 		}
 	}
 	return cur
 }
 
-func find(n *Node, k Key) (p, cur *Node) {
-	cur = n
-	for cur != nil {
-		if diff := k.CompareTo(cur.k); diff == 0 {
-			return p, cur
-		} else {
-			p = cur
-			if diff < 0 {
-				cur = cur.l
-			} else {
-				cur = cur.r
-			}
-		}
-	}
-	return p, cur
-}
-
-func balance(n *Node) *Node {
+func (tree *RBTree) recoverBalance(n *Node) {
 	cur := n
 	for cur.p.color != BLACK {
 		if cur.p == cur {
 			cur.color = BLACK
-			return cur
+			return
 		}
-		ggp := cur.p.p
-		isLeft := ggp.isLeftChild()
-		isRoot := ggp.p == ggp
-		cur = rotate(cur)
-		setColor(cur)
-		if isRoot {
-			cur.p = cur
-		} else if isLeft {
-			cur.p, ggp.p.l = ggp.p, cur
-		} else {
-			cur.p, ggp.p.r = ggp.p, cur
-		}
+		cur = balance(cur)
 	}
-	return findRoot(cur)
 }
 
 func setColor(n *Node) {
@@ -111,70 +91,64 @@ func setColor(n *Node) {
 	}
 }
 
-func rotate(n *Node) *Node {
+func balance(n *Node) *Node {
+	gp := n.p.p
 	if n.isLeftChild() {
 		if n.p.isLeftChild() {
-			return rotateR(n.p.p)
+			rotateR(gp)
 		} else { // !n.p.isLeftChild()
-			return rotateRL(n.p.p)
+			rotateRL(gp)
 		}
 	} else { // !n.isLeftChild()
 		if n.p.isLeftChild() {
-			return rotateLR(n.p.p)
+			rotateLR(gp)
 		} else { // !n.p.isLeftChild()
-			return rotateL(n.p.p)
+			rotateL(gp)
 		}
 	}
+	setColor(gp)
+	return gp
 }
 
-type linkType int
-
-const (
-	root linkType = 0 + iota
-	left
-	right
-)
-
 func (tree *RBTree) Delete(k Key) (Value, error) {
-	p, cur := find(tree.root, k)
+	targetPl := tree.find(k)
+	cur := targetPl.Node()
 	if cur == nil {
 		return nil, NotFoundErr
 	}
-
+	deleteValue := cur.value
 	if cur.l == nil && cur.r == nil {
-		deletedColor, linkT := tree.replaceWith(p, cur, nil)
-		if linkT != root && deletedColor == BLACK {
-			tree.root = tree.recoverRank(p, linkT)
+		deletedColor := tree.replaceWith(targetPl, nil)
+		if deletedColor == BLACK {
+			tree.recoverRank(targetPl)
 		}
 	} else {
 		srcP, srcCur := findSubstitue(cur)
-
-		var ssrcCur *Node
-		if srcCur != nil {
-			ssrcCur = srcCur.l
+		if srcCur == nil {
+			panic("findSubstitue() dont return nil as srcCur in this context")
 		}
-		deletedColor, linkT := tree.replaceWith(srcP, srcCur, ssrcCur)
-		_, _, e := tree.updateValueWith(p, cur, srcCur)
+
+		ssrcCur := srcCur.l
+		pl := tree.place(srcP, srcCur)
+		tmp := &Node{}
+		tmp.copyFrom(srcCur)
+		deletedColor := tree.replaceWith(pl, ssrcCur)
+		e := tree.updateValueWith(targetPl, tmp)
 		if e != nil {
 			panic("not supported")
 		}
 		if deletedColor == BLACK {
-			if srcP.isRoot() {
-				tree.root = tree.recoverRank(tree.root, linkT)
-			} else if srcP == cur {
-				tree.root = tree.recoverRank(srcCur, linkT)
-			} else {
-				tree.root = tree.recoverRank(srcP, linkT)
-			}
+			tree.recoverRank(pl)
 		}
 	}
-	return cur.value, nil
+	return deleteValue, nil
 }
 
-func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, linkType, error) {
+func (tree *RBTree) updateValueWith(pl place, new *Node) error {
 	if new == nil {
-		return RED, root, fmt.Errorf("invalid input; new attr is nil")
+		return fmt.Errorf("invalid input; new attr is nil")
 	}
+	old := pl.Node()
 	new.l, new.r = old.l, old.r
 	if new.l != nil {
 		new.l.p = new
@@ -182,47 +156,31 @@ func (tree *RBTree) updateValueWith(p, old, new *Node) (Color, linkType, error) 
 	if new.r != nil {
 		new.r.p = new
 	}
-	c, t := tree.replaceWith(p, old, new)
-	return c, t, nil
+	_ = tree.replaceWith(pl, new)
+	return nil
 }
 
-func (tree *RBTree) replaceWith(p, old, new *Node) (deleted Color, t linkType) {
-	link, t := tree.linkPoint(p, old)
+func (tree *RBTree) replaceWith(pl place, new *Node) (lost Color) {
 	if new == nil {
-		deleted = (*link).color
+		lost = pl.Node().color
 	} else {
-		deleted = new.color
-		new.color = (*link).color
+		lost = new.color
+		new.color = pl.Node().color
 	}
-	setLink(link, new, p)
+	pl.setOnPlace(new)
 	return
 }
 
-func (tree *RBTree) linkPoint(p, c *Node) (**Node, linkType) {
-	if p == nil || c.isRoot() {
-		return &(tree.root), root
-	} else if c.isLeftChild() {
-		return &(p.l), left
+func (tree *RBTree) place(p, n *Node) place {
+	if n == nil {
+		panic("place() dont support n is nil!!")
+	}
+	if p == nil || n.isRoot() {
+		return place{t: root, tree: tree, parent: nil}
+	} else if n.isLeftChild() {
+		return place{t: left, tree: tree, parent: p}
 	} else {
-		return &(p.r), right
-	}
-}
-
-func setLink(link **Node, c, p *Node) {
-	isRoot := (*link).isRoot()
-	*link = c
-	if c == nil { // a leaf doesn't know its parent...
-		return
-	}
-	if isRoot {
-		c.p = c
-		return
-	} else if p != nil {
-		c.p = p
-		return
-	} else { // p == nil represents link is root
-		c.p = c
-		return
+		return place{t: right, tree: tree, parent: p}
 	}
 }
 
@@ -239,6 +197,9 @@ func findSubstitue(n *Node) (p, cur *Node) {
 
 func findMax(n *Node) (p, cur *Node) {
 	cur = n
+	if n == nil {
+		return nil, nil
+	}
 	for cur.r != nil {
 		p = cur
 		cur = cur.r
@@ -246,98 +207,75 @@ func findMax(n *Node) (p, cur *Node) {
 	return p, cur
 }
 
-func (tree *RBTree) recoverRank(p *Node, linkT linkType) *Node {
-	switch linkT {
+func (tree *RBTree) recoverRank(pl place) {
+	switch pl.t {
 	case left:
-		return tree.recoverRankLeft(p)
+		tree.recoverRankLeft(pl.parent)
 	case right:
-		return tree.recoverRankRight(p)
+		tree.recoverRankRight(pl.parent)
 	case root:
-		p.color = BLACK
-		return p
+		pl.tree.root.color = BLACK
 	default:
-		if p != nil {
-			panic("invalid attr p is not nil")
-		}
-		return nil
+		panic("invalid attr place's t")
 	}
+	return
 }
 
-func (tree *RBTree) recoverRankLeft(p *Node) *Node {
+func (tree *RBTree) recoverRankLeft(p *Node) {
 	pp := p.p
-	isRoot := p.isRoot()
-	isLeft := p.isLeftChild()
+	pl := tree.place(pp, p)
 
 	topColor := p.color
 	switch p.r.Color() {
 	case BLACK:
 		if p.r.l.Color() == RED {
-			new := rotateRL(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateRL(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else if p.r.r.Color() == RED {
-			new := rotateL(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateL(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else {
 			p.color, p.r.color = BLACK, RED
 			if topColor == BLACK {
-				var t linkType
-				if isRoot {
-					t = root
-				} else if isLeft {
-					t = left
-				} else {
-					t = right
-				}
-				return tree.recoverRank(p.p, t)
+				tree.recoverRank(pl)
+				return
 			}
 		}
 	case RED:
-		new := rotateL(p)
-		new.l.color, new.color = RED, BLACK
-		tree.replaceWith(pp, p, new)
-		return tree.recoverRankLeft(new.l)
+		rotateL(p)
+		p.l.color, p.color = RED, BLACK
+		tree.recoverRankLeft(p.l)
+		return
 	}
-	return findRoot(p)
+	return
 }
-func (tree *RBTree) recoverRankRight(p *Node) *Node {
+
+func (tree *RBTree) recoverRankRight(p *Node) {
 
 	pp := p.p
-	isRoot := p.isRoot()
-	isLeft := p.isLeftChild()
+	pl := tree.place(pp, p)
 
 	topColor := p.color
 	switch p.l.Color() {
 	case BLACK:
 		if p.l.r.Color() == RED {
-			new := rotateLR(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
-
+			rotateLR(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else if p.l.l.Color() == RED {
-			new := rotateR(p)
-			new.l.color, new.color, new.r.color = BLACK, topColor, BLACK
-			tree.replaceWith(pp, p, new)
+			rotateR(p)
+			p.l.color, p.color, p.r.color = BLACK, topColor, BLACK
 		} else {
 			p.color, p.l.color = BLACK, RED
 			if topColor == BLACK {
-				var t linkType
-				if isRoot {
-					t = root
-				} else if isLeft {
-					t = left
-				} else {
-					t = right
-				}
-				return tree.recoverRank(p.p, t)
+				tree.recoverRank(pl)
+				return
 			}
 		}
 	case RED:
-		new := rotateR(p)
-		new.r.color, new.color = RED, BLACK
-		tree.replaceWith(pp, p, new)
-		return tree.recoverRankRight(new.r)
+		rotateR(p)
+		p.r.color, p.color = RED, BLACK
+		tree.recoverRankRight(p.r)
+		return
 	}
-	return findRoot(p)
+	return
 }

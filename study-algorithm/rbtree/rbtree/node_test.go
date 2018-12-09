@@ -150,7 +150,8 @@ func Test_rotateL(t *testing.T) {
 			),
 		},
 	} {
-		act := rotateL(test.input)
+		rotateL(test.input)
+		act := test.input
 		if valid, invalidNode := checkNoBrokenLink(act); !valid {
 			t.Errorf("case: %d; tree broken!!(\nat %s \nof %s\n)", idx, invalidNode, act)
 		}
@@ -189,7 +190,8 @@ func Test_rotateR(t *testing.T) {
 			),
 		},
 	} {
-		act := rotateR(test.input)
+		rotateR(test.input)
+		act := test.input
 		if valid, invalidNode := checkNoBrokenLink(act); !valid {
 			t.Errorf("case: %d; tree broken!!(\nat %s \nof %s\n)", idx, invalidNode, act)
 		}
@@ -239,7 +241,8 @@ func Test_rotateLR(t *testing.T) {
 			),
 		},
 	} {
-		act := rotateLR(test.input)
+		rotateLR(test.input)
+		act := test.input
 		if valid, invalidNode := checkNoBrokenLink(act); !valid {
 			t.Errorf("case: %d; tree broken!!(\nat %s \nof %s\n)", idx, invalidNode, act)
 		}
@@ -289,7 +292,8 @@ func Test_rotateRL(t *testing.T) {
 			),
 		},
 	} {
-		act := rotateRL(test.input)
+		rotateRL(test.input)
+		act := test.input
 		if valid, invalidNode := checkNoBrokenLink(act); !valid {
 			t.Errorf("case: %d; tree broken!!(\nat %s \nof %s\n)", idx, invalidNode, act)
 		}

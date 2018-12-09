@@ -5,29 +5,6 @@ import (
 	"testing"
 )
 
-func Test_balance(t *testing.T) {
-	for idx, node := range []*Node{
-		rootNode(RED, 1, nil, nil),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			r := parentNode(BLACK, 0, parentNode(RED, 10, nil, n), nil)
-			r.p = r
-			return n
-		}(),
-		func() *Node {
-			n := simpleNode(RED, 20)
-			r := parentNode(BLACK, 0, nil, parentNode(RED, 10, nil, n))
-			r.p = r
-			return n
-		}(),
-	} {
-		root := balance(node)
-		if valid, act := checkNoBrokenLink(root); !valid {
-			t.Errorf("case: %d; tree broken!!(\nat %s)", idx, act)
-		}
-	}
-}
-
 func Test_Insert(t *testing.T) {
 	type testCase struct {
 		input    []int
@@ -113,6 +90,94 @@ func Test_Insert(t *testing.T) {
 	}
 }
 
+func Test_recoverBalance(t *testing.T) {
+	type testCase struct {
+		desc string
+		node *Node
+	}
+	for _, test := range []testCase{
+		testCase{
+			desc: "root node balanced(its color will be made black)",
+			node: rootNode(RED, 1, nil, nil),
+		},
+		testCase{
+			desc: "rotateR(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					parentNode(
+						RED, -200,
+						n,
+						simpleNode(BLACK, -300),
+					),
+					simpleNode(BLACK, -400),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateLR(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					parentNode(
+						RED, -200,
+						simpleNode(BLACK, -300),
+						n,
+					),
+					simpleNode(BLACK, -400),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateRL(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					simpleNode(BLACK, -200),
+					parentNode(
+						RED, -300,
+						n,
+						simpleNode(BLACK, -400),
+					),
+				)
+				return n
+			}(),
+		},
+		testCase{
+			desc: "rotateL(p)",
+			node: func() *Node {
+				n := parentNode(RED, 0, simpleNode(BLACK, 100), simpleNode(BLACK, 200))
+				rootNode(
+					BLACK, -100,
+					simpleNode(BLACK, -200),
+					parentNode(
+						RED, -300,
+						simpleNode(BLACK, -400),
+						n,
+					),
+				)
+				return n
+			}(),
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			tree := &RBTree{root: findRoot(test.node)}
+			tree.recoverBalance(test.node)
+			if tree.root.color != BLACK {
+				t.Errorf("tree.root.color isn't BLACK!!(\n%s)", tree.root)
+			}
+			if valid, act := checkNoBrokenLink(tree.root); !valid {
+				t.Errorf("tree is broken!!(\nat %s)", act)
+			}
+		})
+	}
+}
+
 func Test_Lookup(t *testing.T) {
 	tree := &RBTree{}
 	tree.Insert(key(10), "found")
@@ -133,39 +198,115 @@ func Test_Lookup(t *testing.T) {
 	}
 }
 
-func Test_findMax(t *testing.T) {
-	tree := &RBTree{
-		root: rootNode(BLACK, 3,
-			parentNode(BLACK, 2, simpleNode(RED, 1), nil),
-			simpleNode(BLACK, 4),
-		),
+func Test_find(t *testing.T) {
+	type testCase struct {
+		desc               string
+		key                int
+		top, foundP, found *Node
 	}
-	p, found := findMax(tree.root)
-	assertNode(t, "parent", simpleNode(BLACK, 3), p)
-	assertNode(t, "", simpleNode(BLACK, 4), found)
+	for _, test := range []testCase{
+		testCase{
+			desc:   "returns the node has passed key",
+			key:    10,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 5),
+			found:  simpleNode(BLACK, 10),
+		},
+		testCase{
+			desc:   "when found node is root, return nil as its parent",
+			key:    5,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: nil,
+			found:  simpleNode(BLACK, 5),
+		},
+		testCase{
+			desc:   "when not found has passed key, found node is nil",
+			key:    0,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 5),
+			found:  nil,
+		},
+		testCase{
+			desc:   "when not found has passed key, found parent node is able to be proper place",
+			key:    8,
+			top:    rootNode(BLACK, 5, nil, simpleNode(BLACK, 10)),
+			foundP: simpleNode(BLACK, 10),
+			found:  nil,
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			tree := &RBTree{root: test.top}
+			pl := tree.find(key(test.key))
+			actP, actFound := pl.parent, pl.Node()
+			assertNode(t, "parent", test.foundP, actP)
+			assertNode(t, "", test.found, actFound)
+		})
+	}
+}
+
+func Test_findMax(t *testing.T) {
+	type testCase struct {
+		desc               string
+		top, foundP, found *Node
+	}
+	for _, test := range []testCase{
+		testCase{
+			desc: "returns the node has max value and its parent node",
+			top: rootNode(
+				BLACK, 3,
+				parentNode(BLACK, 2, simpleNode(RED, 1), nil),
+				simpleNode(BLACK, 4),
+			),
+			foundP: simpleNode(BLACK, 3),
+			found:  simpleNode(BLACK, 4),
+		},
+		testCase{
+			desc:   "when the node has max value is root, returned parent node is nil",
+			top:    rootNode(BLACK, 3, nil, nil),
+			foundP: nil,
+			found:  simpleNode(BLACK, 3),
+		},
+		testCase{
+			desc:   "when the root node is nil, returned node and its parent are nil",
+			top:    nil,
+			foundP: nil,
+			found:  nil,
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			actP, actFound := findMax(test.top)
+			assertNode(t, "parent", test.foundP, actP)
+			assertNode(t, "", test.found, actFound)
+		})
+	}
 }
 
 func Test_findSubstitue(t *testing.T) {
 	type testCase struct {
+		desc                                 string
 		input, expectedParent, expectedFound *Node
 	}
 	for idx, test := range []testCase{
 		testCase{
+			desc:           "if target have no child, returns nil as substitute and target as parent",
 			input:          rootNode(BLACK, 5, nil, nil),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  nil,
 		},
 		testCase{
+			desc:           "if target have no left child, returns right child as substitute and target as parent",
 			input:          rootNode(BLACK, 5, nil, simpleNode(RED, 8)),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  simpleNode(RED, 8),
 		},
 		testCase{
+			desc:           "if target have left child, returns max node exists under left child as substitute",
 			input:          rootNode(BLACK, 5, simpleNode(RED, 3), nil),
 			expectedParent: simpleNode(BLACK, 5),
 			expectedFound:  simpleNode(RED, 3),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 5,
 				simpleNode(RED, 3),
@@ -175,6 +316,7 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(RED, 3),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 5,
 				parentNode(RED, 3, simpleNode(BLACK, 2), simpleNode(BLACK, 4)),
@@ -184,6 +326,7 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(BLACK, 4),
 		},
 		testCase{
+			desc: "if target have left child, returns max node exists under left child as substitute",
 			input: rootNode(
 				BLACK, 6,
 				parentNode(
@@ -199,9 +342,11 @@ func Test_findSubstitue(t *testing.T) {
 			expectedFound:  simpleNode(RED, 5),
 		},
 	} {
-		actP, actF := findSubstitue(test.input)
-		assertNode(t, fmt.Sprintf("parent(idx: %d)", idx), test.expectedParent, actP)
-		assertNode(t, fmt.Sprintf("found(idx: %d)", idx), test.expectedFound, actF)
+		t.Run(test.desc, func(t *testing.T) {
+			actP, actF := findSubstitue(test.input)
+			assertNode(t, fmt.Sprintf("parent(idx: %d)", idx), test.expectedParent, actP)
+			assertNode(t, fmt.Sprintf("found(idx: %d)", idx), test.expectedFound, actF)
+		})
 	}
 }
 
@@ -226,12 +371,18 @@ func Test_replace(t *testing.T) {
 			newNode:      simpleNode(BLACK, 3),
 			expectedRoot: rootNode(BLACK, 3, nil, nil),
 		},
+
 		replaceTestCase{
-			root:         rootNode(BLACK, 5, simpleNode(RED, 2), simpleNode(RED, 10)),
+			root: rootNode(
+				BLACK, 5,
+				simpleNode(RED, 2),
+				simpleNode(RED, 10),
+			),
 			target:       5,
 			newNode:      simpleNode(BLACK, 3),
 			expectedRoot: rootNode(BLACK, 3, nil, nil),
 		},
+
 		replaceTestCase{
 			root:         rootNode(BLACK, 5, simpleNode(RED, 2), simpleNode(RED, 10)),
 			target:       2,
@@ -246,8 +397,8 @@ func Test_replace(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		tree.replaceWith(p, c, test.newNode)
+		pl := tree.find(key(test.target))
+		tree.replaceWith(pl, test.newNode)
 		if !tree.root.EqualAsSubTree(test.expectedRoot) {
 			t.Errorf("TEST CASE(%d) failed! act:%s", idx, tree.root)
 		}
@@ -304,8 +455,8 @@ func Test_update(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		_, _, e := tree.updateValueWith(p, c, test.newNode)
+		pl := tree.find(key(test.target))
+		e := tree.updateValueWith(pl, test.newNode)
 		if e != nil {
 			t.Errorf("TEST CASE(%d) failed! err:%s", idx, e)
 		}
@@ -315,28 +466,19 @@ func Test_update(t *testing.T) {
 	}
 }
 
-func Test_update_Error(t *testing.T) {
-	for idx, test := range []replaceTestCase{
-		replaceTestCase{
-			root:         rootNode(BLACK, 5, nil, nil),
-			target:       5,
-			newNode:      nil,
-			expectedRoot: nil,
-		},
-	} {
-		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		_, _, e := tree.updateValueWith(p, c, test.newNode)
-		if e == nil {
-			t.Errorf("TEST CASE(%d) failed!", idx)
-		}
+func Test_update_dont_support_with_nil(t *testing.T) {
+	tree := &RBTree{root: rootNode(BLACK, 5, nil, nil)}
+	pl := tree.find(key(5))
+	e := tree.updateValueWith(pl, nil)
+	if e == nil {
+		t.Errorf("failed!")
 	}
 }
 
 func Test_recoverRank_Left(t *testing.T) {
 	type testCase struct {
 		parent   *Node
-		t        linkType
+		t        placeType
 		expected *Node
 	}
 	for idx, test := range []testCase{
@@ -517,7 +659,13 @@ func Test_recoverRank_Left(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		act := tree.recoverRank(test.parent, test.t)
+		pl := place{
+			t:      test.t,
+			tree:   tree,
+			parent: test.parent,
+		}
+		tree.recoverRank(pl)
+		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
 		}
@@ -527,7 +675,7 @@ func Test_recoverRank_Left(t *testing.T) {
 func Test_recoverRank_Right(t *testing.T) {
 	type testCase struct {
 		parent   *Node
-		t        linkType
+		t        placeType
 		expected *Node
 	}
 	for idx, test := range []testCase{
@@ -685,7 +833,13 @@ func Test_recoverRank_Right(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: findRoot(test.parent)}
-		act := tree.recoverRank(test.parent, test.t)
+		pl := place{
+			t:      test.t,
+			tree:   tree,
+			parent: test.parent,
+		}
+		tree.recoverRank(pl)
+		act := tree.root
 		if !act.EqualAsSubTree(test.expected) {
 			t.Errorf("TEST CASE(%d) failed!\n%s", idx, act)
 		}
