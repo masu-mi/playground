@@ -11,11 +11,6 @@ type Dict interface {
 	Delete(k Key) (Value, error)
 }
 
-type OrderedDict interface {
-	Dict
-	Scan(start, end Key, step int) (chan Value, error)
-}
-
 type Key interface {
 	CompareTo(k Key) int
 }
