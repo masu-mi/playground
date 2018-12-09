@@ -29,8 +29,8 @@ type RBTree struct {
 }
 
 func (tree *RBTree) Lookup(k Key) (Value, error) {
-	_, cur := find(tree.root, k)
-	if cur != nil {
+	pl := tree.find(k)
+	if cur := pl.Node(); cur != nil {
 		return cur.value, nil
 	}
 	return nil, NotFoundErr
@@ -43,40 +43,31 @@ func (tree *RBTree) Insert(k Key, item Value) (Value, error) {
 }
 
 func (tree *RBTree) set(k Key, item Value) *Node {
-	p, cur := find(tree.root, k)
-	if cur != nil {
+	pl := tree.find(k)
+	if cur := pl.Node(); cur != nil {
 		cur.value = item
 		return cur
 	}
-	cur = &Node{color: RED, k: k, value: item, p: p}
-	if p == nil {
-		cur.p = cur
-		tree.root = cur
-	} else {
-		if k.CompareTo(p.k) < 0 {
-			p.l = cur
-		} else {
-			p.r = cur
-		}
-	}
+	cur := &Node{color: RED, k: k, value: item}
+	pl.setOnPlace(cur)
 	return cur
 }
 
-func find(n *Node, k Key) (p, cur *Node) {
-	cur = n
-	for cur != nil {
-		if diff := k.CompareTo(cur.k); diff == 0 {
-			return p, cur
+func (tree *RBTree) find(k Key) place {
+	cur := place{t: root, tree: tree, parent: nil}
+	for cur.Node() != nil {
+		if diff := k.CompareTo(cur.Node().k); diff == 0 {
+			return cur
 		} else {
-			p = cur
+			cur = place{tree: tree, parent: cur.Node()}
 			if diff < 0 {
-				cur = cur.l
+				cur.t = left
 			} else {
-				cur = cur.r
+				cur.t = right
 			}
 		}
 	}
-	return p, cur
+	return cur
 }
 
 func (tree *RBTree) recoverBalance(n *Node) {
@@ -120,25 +111,29 @@ func balance(n *Node) *Node {
 }
 
 func (tree *RBTree) Delete(k Key) (Value, error) {
-	p, cur := find(tree.root, k)
+	targetPl := tree.find(k)
+	cur := targetPl.Node()
 	if cur == nil {
 		return nil, NotFoundErr
 	}
-
+	deleteValue := cur.value
 	if cur.l == nil && cur.r == nil {
-		deletedColor, pl := tree.replaceWith(p, cur, nil)
+		deletedColor := tree.replaceWith(targetPl, nil)
 		if deletedColor == BLACK {
-			tree.recoverRank(pl)
+			tree.recoverRank(targetPl)
 		}
 	} else {
 		srcP, srcCur := findSubstitue(cur)
-
-		var ssrcCur *Node
-		if srcCur != nil {
-			ssrcCur = srcCur.l
+		if srcCur == nil {
+			panic("findSubstitue() dont return nil as srcCur in this context")
 		}
-		deletedColor, pl := tree.replaceWith(srcP, srcCur, ssrcCur)
-		e := tree.updateValueWith(p, cur, srcCur)
+
+		ssrcCur := srcCur.l
+		pl := tree.place(srcP, srcCur)
+		tmp := &Node{}
+		tmp.copyFrom(srcCur)
+		deletedColor := tree.replaceWith(pl, ssrcCur)
+		e := tree.updateValueWith(targetPl, tmp)
 		if e != nil {
 			panic("not supported")
 		}
@@ -146,13 +141,14 @@ func (tree *RBTree) Delete(k Key) (Value, error) {
 			tree.recoverRank(pl)
 		}
 	}
-	return cur.value, nil
+	return deleteValue, nil
 }
 
-func (tree *RBTree) updateValueWith(p, old, new *Node) error {
+func (tree *RBTree) updateValueWith(pl place, new *Node) error {
 	if new == nil {
 		return fmt.Errorf("invalid input; new attr is nil")
 	}
+	old := pl.Node()
 	new.l, new.r = old.l, old.r
 	if new.l != nil {
 		new.l.p = new
@@ -160,12 +156,11 @@ func (tree *RBTree) updateValueWith(p, old, new *Node) error {
 	if new.r != nil {
 		new.r.p = new
 	}
-	_, _ = tree.replaceWith(p, old, new)
+	_ = tree.replaceWith(pl, new)
 	return nil
 }
 
-func (tree *RBTree) replaceWith(p, old, new *Node) (lost Color, pl place) {
-	pl = tree.place(p, old)
+func (tree *RBTree) replaceWith(pl place, new *Node) (lost Color) {
 	if new == nil {
 		lost = pl.Node().color
 	} else {
@@ -177,12 +172,15 @@ func (tree *RBTree) replaceWith(p, old, new *Node) (lost Color, pl place) {
 }
 
 func (tree *RBTree) place(p, n *Node) place {
+	if n == nil {
+		panic("place() dont support n is nil!!")
+	}
 	if p == nil || n.isRoot() {
 		return place{t: root, tree: tree, parent: nil}
 	} else if n.isLeftChild() {
-		return place{t: left, tree: nil, parent: p}
+		return place{t: left, tree: tree, parent: p}
 	} else {
-		return place{t: right, tree: nil, parent: p}
+		return place{t: right, tree: tree, parent: p}
 	}
 }
 

@@ -235,7 +235,9 @@ func Test_find(t *testing.T) {
 		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
-			actP, actFound := find(test.top, key(test.key))
+			tree := &RBTree{root: test.top}
+			pl := tree.find(key(test.key))
+			actP, actFound := pl.parent, pl.Node()
 			assertNode(t, "parent", test.foundP, actP)
 			assertNode(t, "", test.found, actFound)
 		})
@@ -395,8 +397,8 @@ func Test_replace(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		tree.replaceWith(p, c, test.newNode)
+		pl := tree.find(key(test.target))
+		tree.replaceWith(pl, test.newNode)
 		if !tree.root.EqualAsSubTree(test.expectedRoot) {
 			t.Errorf("TEST CASE(%d) failed! act:%s", idx, tree.root)
 		}
@@ -453,8 +455,8 @@ func Test_update(t *testing.T) {
 		},
 	} {
 		tree := &RBTree{root: test.root}
-		p, c := find(tree.root, key(test.target))
-		e := tree.updateValueWith(p, c, test.newNode)
+		pl := tree.find(key(test.target))
+		e := tree.updateValueWith(pl, test.newNode)
 		if e != nil {
 			t.Errorf("TEST CASE(%d) failed! err:%s", idx, e)
 		}
@@ -466,8 +468,8 @@ func Test_update(t *testing.T) {
 
 func Test_update_dont_support_with_nil(t *testing.T) {
 	tree := &RBTree{root: rootNode(BLACK, 5, nil, nil)}
-	p, c := find(tree.root, key(5))
-	e := tree.updateValueWith(p, c, nil)
+	pl := tree.find(key(5))
+	e := tree.updateValueWith(pl, nil)
 	if e == nil {
 		t.Errorf("failed!")
 	}
