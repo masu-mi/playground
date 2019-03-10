@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,54 +17,9 @@ type pos struct {
 	x, y int
 }
 
-type history struct {
-	pos
-	l int
-}
-
-func searchMinPathLength(maze []string, goal pos) (int, error) {
-	// return min path, if not found this returns -1, errors.New("not found")
-	cur := pos{0, 0}
-	candidates := []history{}
-	curHist := history{}
-	note(maze, cur)
-	candidates = append(candidates, history{cur, 1})
-	for len(candidates) > 0 {
-		curHist = candidates[0]
-		candidates = candidates[1:]
-		if curHist.x == goal.x && curHist.y == goal.y {
-			return curHist.l, nil
-		}
-		for _, n := range nextAvailables(maze, curHist.pos) {
-			note(maze, n)
-			candidates = append(candidates, history{n, curHist.l + 1})
-		}
-	}
-	return -1, errors.New("not found")
-}
-
-func note(maze []string, cur pos) {
-	var buf bytes.Buffer
-	l := maze[cur.y]
-	buf.WriteString(l[0:cur.x])
-	buf.WriteString("#")
-	buf.WriteString(l[cur.x+1 : len(l)])
-	maze[cur.y] = buf.String()
-}
-
-func nextAvailables(maze []string, cur pos) (candidates []pos) {
-	for _, diff := range []pos{pos{0, 1}, pos{0, -1}, pos{1, 0}, pos{-1, 0}} {
-		if isBlocked(maze, cur.x+diff.x, cur.y+diff.y) {
-			continue
-		}
-		candidates = append(candidates, pos{cur.x + diff.x, cur.y + diff.y})
-	}
-	return candidates
-}
-
 func maxScore(maze []string, goal pos) int {
 	sum := countBlock(maze)
-	l, e := searchMinPathLength(maze, goal)
+	l, e := searchMinPathLength(maze, pos{0, 0}, goal)
 	if e != nil {
 		return -1
 	}
@@ -77,6 +31,45 @@ func countBlock(maze []string) (sum int) {
 		sum += strings.Count(maze[i], "#")
 	}
 	return sum
+}
+
+func searchMinPathLength(maze []string, start, goal pos) (int, error) {
+	dists := make([][]int, goal.y+1)
+	for y := 0; y < len(dists); y++ {
+		dists[y] = make([]int, goal.x+1)
+	}
+	dfs(maze, pos{0, 0}, goal, dists)
+	if l := dists[goal.y][goal.x]; l > 0 {
+		return l, nil
+	}
+	return -1, errors.New("not found")
+}
+
+func dfs(maze []string, start, goal pos, dists [][]int) {
+	dists[start.y][start.x] = 1
+
+	var cur pos
+	var candidates []pos
+
+	candidates = append(candidates, start)
+	for len(candidates) > 0 {
+		cur, candidates = candidates[0], candidates[1:]
+		if cur.x == goal.x && cur.y == goal.y {
+			return
+		}
+		for _, diff := range []pos{{0, 1}, {0, -1}, {1, 0}, {-1, 0}} {
+			next := pos{
+				cur.x + diff.x,
+				cur.y + diff.y,
+			}
+			if isBlocked(maze, next.x, next.y) || dists[next.y][next.x] > 0 {
+				continue
+			}
+			dists[next.y][next.x] = dists[cur.y][cur.x] + 1
+			candidates = append(candidates, next)
+		}
+	}
+	return
 }
 
 func loadMaze(h, w int) []string {
