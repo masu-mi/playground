@@ -19,12 +19,8 @@ func main() {
 func checkRow(diff [][]int) bool {
 	for i := 0; i < 3; i++ {
 		row := diff[i]
-		if len(row) == 0 {
-			continue
-		}
-		ans := row[0]
 		for j := 1; j < len(row); j++ {
-			if ans != diff[i][j] {
+			if diff[i][0] != diff[i][j] {
 				return false
 			}
 		}
@@ -34,9 +30,8 @@ func checkRow(diff [][]int) bool {
 
 func checkCol(diff [][]int) bool {
 	for i := 0; i < 3; i++ {
-		ans := diff[0][i]
 		for j := 1; j < len(diff); j++ {
-			if ans != diff[j][i] {
+			if diff[0][i] != diff[j][i] {
 				return false
 			}
 		}
