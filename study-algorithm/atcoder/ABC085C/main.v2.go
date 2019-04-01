@@ -16,6 +16,7 @@ func main() {
 }
 
 func search(num, y int) combi {
+	// Greedy ver.
 	state := combi{}
 	state.natsume = num
 
