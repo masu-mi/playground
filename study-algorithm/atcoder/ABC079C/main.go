@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"strconv"
 )
@@ -13,23 +13,29 @@ func main() {
 	for i := 0; i < 4; i++ {
 		nums[i], _ = strconv.Atoi(s[i : i+1])
 	}
-	exp, _ := dfs(nums[0], nums[1:len(nums)])
-	fmt.Printf("%d%s\n", nums[0], exp)
-}
-func dfs(sum int, rests []int) (exp string, err error) {
-	if len(rests) == 0 {
-		if sum != 7 {
-			return "", errors.New("invalid")
+	for i := 0; i < 1<<uint(len(nums)-1); i++ {
+		if exp, ok := calcExp(nums, i); ok {
+			fmt.Println(exp)
+			return
 		}
-		return "=7", nil
 	}
-	exp, err = dfs(sum+rests[0], rests[1:len(rests)])
-	if err == nil {
-		return fmt.Sprintf("+%d%s", rests[0], exp), nil
+}
+
+func calcExp(nums []int, selection int) (exp string, found bool) {
+	sum := nums[0]
+	buf := bytes.NewBufferString(fmt.Sprintf("%d", nums[0]))
+	for idx := 1; idx < len(nums); idx++ {
+		if selection&1 == 1 {
+			buf.WriteString(fmt.Sprintf("+%d", nums[idx]))
+			sum += nums[idx]
+		} else {
+			buf.WriteString(fmt.Sprintf("-%d", nums[idx]))
+			sum -= nums[idx]
+		}
+		selection >>= 1
 	}
-	exp, err = dfs(sum-rests[0], rests[1:len(rests)])
-	if err == nil {
-		return fmt.Sprintf("-%d%s", rests[0], exp), nil
+	if sum == 7 {
+		return buf.String() + "=7", true
 	}
-	return "", err
+	return "", false
 }
