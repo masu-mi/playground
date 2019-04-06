@@ -25,13 +25,19 @@ func main() {
 		c, _ := strconv.Atoi(sc.Text())
 		cs[i] = c / 100
 	}
-	for i := 1; i <= num; i++ {
-		if bfs(g, i, 0, ps, cs) {
-			fmt.Printf("%d\n", i)
-			return
-		}
-	}
+	fmt.Printf("%d\n", searchMin(g, 0, num, ps, cs))
 	return
+}
+
+func searchMin(g, min, max int, ps, cs []int) int {
+	if min == max {
+		return min
+	}
+	num := (min + max) / 2
+	if bfs(g, num, 0, ps, cs) {
+		return searchMin(g, min, num, ps, cs)
+	}
+	return searchMin(g, num+1, max, ps, cs)
 }
 
 func bfs(g, rest, idx int, ps, cs []int) bool {
