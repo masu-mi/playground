@@ -30,6 +30,7 @@ func main() {
 }
 
 func searchMin(g, min, max int, ps, cs []int) int {
+	// binary search
 	if min == max {
 		return min
 	}
@@ -40,7 +41,14 @@ func searchMin(g, min, max int, ps, cs []int) int {
 	return searchMin(g, num+1, max, ps, cs)
 }
 
-func bfs(g, rest, idx int, ps, cs []int) bool {
+type attr struct{ g, rest, idx int }
+
+var visited = map[attr]struct{}{}
+
+func dfs(g, rest, idx int, ps, cs []int) bool {
+	if _, ok := visited[attr{g, rest, idx}]; ok {
+		return false
+	}
 	if rest == 0 || idx == len(ps) {
 		return g <= 0
 	}
@@ -48,10 +56,10 @@ func bfs(g, rest, idx int, ps, cs []int) bool {
 		if rest > ps[idx] {
 			return false
 		}
-		return bfs(g-score(idx, rest, ps, cs), 0, idx+1, ps, cs)
+		return dfs(g-score(idx, rest, ps, cs), 0, idx+1, ps, cs)
 	}
 	for i := 0; i <= ps[idx] && i <= rest; i++ {
-		if bfs(g-score(idx, i, ps, cs), rest-i, idx+1, ps, cs) {
+		if dfs(g-score(idx, i, ps, cs), rest-i, idx+1, ps, cs) {
 			return true
 		}
 	}
