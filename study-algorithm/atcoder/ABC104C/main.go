@@ -32,6 +32,7 @@ func main() {
 }
 
 func searchMin(g, idx int, rests []bool, ps, cs []int) int {
+	// bin full-search + Greedy
 	if g <= 0 {
 		return 0
 	}
@@ -57,6 +58,7 @@ func fullScore(idx int, ps, cs []int) (num, score int) {
 }
 
 func numOfRests(g int, rests []bool, ps []int) (num int) {
+	// Greedy
 	l := len(rests)
 	for i := l; i > 0; i-- {
 		if !rests[i-1] {
