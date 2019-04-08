@@ -23,15 +23,15 @@ func main() {
 	}
 	// for cutting branch
 	sort.Sort(sort.Reverse(sort.IntSlice(ranks)))
-	// limitSize := 1
-	// for i := 0; i < n; i++ {
-	// 	if ranks[i] < i {
-	// 		break
-	// 	}
-	// 	limitSize = i + 1
-	// }
+	limitSize := 1
+	for i := 0; i < n; i++ {
+		if ranks[i] < i {
+			break
+		}
+		limitSize = i + 1
+	}
 	// generate k-subset and check it's clique.
-	for i := len(edgeds); i > 0; i-- {
+	for i := limitSize; i > 0; i-- {
 		if searchClique(i, 0, nil, edgeds) {
 			fmt.Printf("%d\n", i)
 			return
