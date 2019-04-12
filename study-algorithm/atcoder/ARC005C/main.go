@@ -16,9 +16,9 @@ func main() {
 	}
 	broken := bfsMinNumOfBrokenWall(h, w, s, g, nums, grid)
 	if broken <= 2 {
-		fmt.Println("Yes")
+		fmt.Println("YES")
 	} else {
-		fmt.Println("No")
+		fmt.Println("NO")
 	}
 }
 
