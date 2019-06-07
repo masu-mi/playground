@@ -11,6 +11,7 @@ bz2file==0.98
 cached-property==1.5.1
 certifi==2018.11.29
 chainer==6.0.0
+chainercv==0.13.0
 chainerrl==0.6.0
 chardet==3.0.4
 Click==7.0
