@@ -44,13 +44,15 @@ func findArticulations(g *Graph) (articulations map[int]struct{}) {
 		} else {
 			if reachable[u] == c.parent[u] {
 				// parent
-				if c.parent[c.parent[u]] > 0 {
+				if c.parent[c.parent[u]] > 0 { // parent isn't root
 					articulations[c.parent[u]] = struct{}{}
 				}
 			} else if reachable[u] == u {
 				// bridge
-				articulations[c.parent[u]] = struct{}{}
-				if treeOutDegree[u] > 0 {
+				if c.parent[c.parent[u]] > 0 { // parent isn't root
+					articulations[c.parent[u]] = struct{}{}
+				}
+				if treeOutDegree[u] > 0 { // u have children
 					articulations[u] = struct{}{}
 				}
 			}
