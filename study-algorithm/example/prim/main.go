@@ -11,9 +11,8 @@ import (
 
 func main() {
 	graph := parseProblem(os.Stdin)
-	start, goal := 0, graph.nodeNum-1
 	fmt.Println("digraph g {")
-	for c, p := range getMinimumSpanningTree(graph, start, goal) {
+	for c, p := range getMinimumSpanningTree(graph) {
 		fmt.Printf("\t%d -> %d;\n", p, c)
 	}
 	fmt.Println("}")
@@ -23,7 +22,7 @@ type mark struct{}
 
 var note = mark{}
 
-func getMinimumSpanningTree(g *graph, s, t int) map[int]int {
+func getMinimumSpanningTree(g *graph) map[int]int {
 	// WARGIN this code is example.
 	// This function assumes g is connected graph.
 	// implement with Prim
