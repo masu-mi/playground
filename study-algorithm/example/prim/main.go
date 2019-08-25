@@ -7,32 +7,33 @@ import (
 	"io"
 	"os"
 	"strconv"
-
-	"github.com/k0kubun/pp"
 )
 
 func main() {
 	graph := parseProblem(os.Stdin)
 	start, goal := 0, graph.nodeNum-1
-	pp.Println(searchShortestPath(graph, start, goal))
+	fmt.Println("digraph g {")
+	for c, p := range getMinimumSpanningTree(graph, start, goal) {
+		fmt.Printf("\t%d -> %d;\n", p, c)
+	}
+	fmt.Println("}")
 }
 
 type mark struct{}
 
 var note = mark{}
 
-func searchShortestPath(g *graph, s, t int) []int {
+func getMinimumSpanningTree(g *graph, s, t int) map[int]int {
 	// WARGIN this code is example.
 	// This function assumes g is connected graph.
-	// implement with Dijkstra
+	// implement with Prim
 	parent := map[int]int{0: 0}
 	heap := newHeap()
-	cost, current := 0, 0
-	for current != t {
-		fmt.Printf("NODE: %d\n", current)
+	current := 0
+	for len(parent) < g.nodeNum {
 		for _, edge := range g.edges[current] {
 			if _, ok := parent[edge.to]; !ok {
-				heap.push(part{cost: cost + edge.weight, edge: edge})
+				heap.push(part{edge: edge})
 			}
 		}
 		p := part{edge: edge{to: -1}}
@@ -48,19 +49,9 @@ func searchShortestPath(g *graph, s, t int) []int {
 			break
 		}
 		parent[p.edge.to] = p.edge.from
-		cost, current = p.cost, p.edge.to
+		current = p.edge.to
 	}
-	cur := t
-	path := []int{cur}
-	for true {
-		p, ok := parent[cur]
-		if !ok || p == cur {
-			break
-		}
-		path = append(path, p)
-		cur = p
-	}
-	return path
+	return parent
 }
 
 type heap struct {
