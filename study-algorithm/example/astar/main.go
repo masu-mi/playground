@@ -98,7 +98,7 @@ func (h *candidateHeap) Len() int {
 	return len(*h)
 }
 func (h *candidateHeap) Less(i, j int) bool {
-	return (*h)[i].score < (*h)[j].score
+	return (*h)[i].score < (*h)[j].score || ((*h)[i].score < (*h)[j].score && (*h)[i].cost < (*h)[j].cost)
 }
 func (h *candidateHeap) Swap(i, j int) {
 	(*h)[i], (*h)[j] = (*h)[j], (*h)[i]
