@@ -1,0 +1,11 @@
+sleep
+game
+sleep
+game
+eat
+game
+game
+eat
+eat
+sleep
+eat
