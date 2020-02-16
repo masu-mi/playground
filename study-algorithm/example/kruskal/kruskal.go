@@ -51,15 +51,15 @@ type unionfind struct {
 	childs []int
 }
 
-func newUnifonFind(size int) *unionfind {
+func newUnifonFind(card int) *unionfind {
 	uf := &unionfind{
-		card:      size,
-		parent:    make([]int, size),
-		rank:      make([]int, size),
-		childs:    make([]int, size),
-		connected: size == 1,
+		card:      card,
+		parent:    make([]int, card),
+		rank:      make([]int, card),
+		childs:    make([]int, card),
+		connected: card == 1,
 	}
-	for i := 0; i < size; i++ {
+	for i := 0; i < card; i++ {
 		uf.parent[i] = i
 	}
 	return uf
