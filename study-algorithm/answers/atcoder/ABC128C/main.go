@@ -47,7 +47,7 @@ func resolve(n, m int, mp []int, ms []uint) int {
 }
 func allOn(l uint, m int, mp []int, ms []uint) bool {
 	for i := 0; i < m; i++ {
-		if mp[i] != int(onesCount(ms[i]&l)%2) {
+		if mp[i] != int(onesCount(ms[i]&l)&1) {
 			return false
 		}
 	}
