@@ -20,7 +20,7 @@ func parseProblem(r io.Reader) int {
 	sc.Split(bufio.ScanWords)
 	testimonies := []testimony{}
 	for i := 0; i < n; i++ {
-		testimonies = append(testimonies, parseTestimony(r))
+		testimonies = append(testimonies, parseTestimony(sc))
 	}
 	max := uint32(0)
 	for i := 0; i < 1<<uint32(n); i++ {
@@ -61,11 +61,9 @@ func onesCount(bits uint32) (num uint32) {
 
 type testimony struct{ h, l uint32 }
 
-func parseTestimony(r io.Reader) (t testimony) {
-	var n int
-	fmt.Scan(&n)
-	sc := bufio.NewScanner(r)
-	sc.Split(bufio.ScanWords)
+func parseTestimony(sc *bufio.Scanner) (t testimony) {
+	sc.Scan()
+	n, _ := strconv.Atoi(sc.Text())
 
 	t.l, t.h = math.MaxUint32, 0
 	for i := 0; i < n; i++ {
