@@ -2,12 +2,6 @@
 package main
 
 import (
-    "fmt"
-    "text/scanner"
-    "os"
-    "strings"
-    "strconv"
-
     "github.com/k0kubun/pp"
 )
 
@@ -35,10 +29,13 @@ type BinOpExpr struct {
 
 %type<expr> program
 %type<expr> expr
+%type<expr> if_state
 %token<token> NUMBER
+%token<token> IF
 
 %left '+' '-'
 %left '*' '/' '%'
+%left '(' ')' '<' '>'
 
 %%
 
@@ -48,6 +45,18 @@ program
         $$ = $1
         yylex.(*Lexer).result = $$
     }
+    | if_state
+    {
+        $$ = $1
+        yylex.(*Lexer).result = $$
+    }
+
+if_state
+    : IF '(' expr ')'
+    {
+       pp.Println($1)
+        $$ = $3
+    }
 
 expr
     : NUMBER
@@ -55,6 +64,10 @@ expr
         $$ = NumExpr{literal: $1.literal, token: $1.token}
         pp.Println($$)
     }
+    | '<' expr '>'
+    { $$ = $2 }
+    | '(' expr ')'
+    { $$ = $2 }
     | expr '+' expr
     { $$ = BinOpExpr{left: $1, operator: '+', right: $3} }
     | expr '-' expr
@@ -65,53 +78,3 @@ expr
     { $$ = BinOpExpr{left: $1, operator: '/', right: $3} }
 
 %%
-
-type Lexer struct {
-    scanner.Scanner
-    result Expression
-}
-
-func (l *Lexer) Lex(lval *yySymType) int {
-    token := int(l.Scan())
-    if token == scanner.Int {
-        token = NUMBER
-    }
-    lval.token = Token{token: token, literal: l.TokenText()}
-    return token
-}
-
-func (l *Lexer) Error(e string) {
-    panic(e)
-}
-
-func main() {
-    l := new(Lexer)
-    l.Init(strings.NewReader(os.Args[1]))
-    yyParse(l)
-    fmt.Printf("%#v\n", l.result)
-    fmt.Println(Eval(l.result))
-}
-
-
-func Eval(e Expression) int {
-   switch e.(type) {
-   case BinOpExpr:
-       left := Eval(e.(BinOpExpr).left)
-       right := Eval(e.(BinOpExpr).right)
-
-       switch e.(BinOpExpr).operator {
-       case '+':
-           return left + right
-       case '-':
-           return left - right
-       case '*':
-           return left * right
-       case '/':
-           return left / right
-       }
-   case NumExpr:
-       num, _ := strconv.Atoi(e.(NumExpr).literal)
-       return num
-   }
-   return 0
-}
