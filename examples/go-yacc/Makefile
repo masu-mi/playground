@@ -27,8 +27,11 @@ clean:
 	rm -rf vendor/*
 
 .PHONY: fast
-fast:
+fast: parser.go
 	go build $(LDFLAGS) -o bin/$(NAME)
+
+parser.go: parser.go.y
+	goyacc -o parser.go parser.go.y
 
 .PHONY: cross-build
 cross-build:

@@ -1,5 +1,7 @@
 FROM golang:1.14.1-buster AS build
 
+RUN go get golang.org/x/tools/cmd/goyacc
+
 COPY . /work
 WORKDIR /work
 
