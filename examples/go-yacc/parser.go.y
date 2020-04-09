@@ -2,7 +2,7 @@
 package main
 
 import (
-    "github.com/k0kubun/pp"
+    "io"
 )
 
 type Expression interface{}
@@ -29,13 +29,11 @@ type BinOpExpr struct {
 
 %type<expr> program
 %type<expr> expr
-%type<expr> if_state
 %token<token> NUMBER
-%token<token> IF
 
 %left '+' '-'
 %left '*' '/' '%'
-%left '(' ')' '<' '>'
+%left '(' ')' '<' '>' '{' '}' '[' ']'
 
 %%
 
@@ -45,28 +43,19 @@ program
         $$ = $1
         yylex.(*Lexer).result = $$
     }
-    | if_state
-    {
-        $$ = $1
-        yylex.(*Lexer).result = $$
-    }
-
-if_state
-    : IF '(' expr ')'
-    {
-       pp.Println($1)
-        $$ = $3
-    }
 
 expr
     : NUMBER
     {
         $$ = NumExpr{literal: $1.literal, token: $1.token}
-        pp.Println($$)
     }
     | '<' expr '>'
     { $$ = $2 }
     | '(' expr ')'
+    { $$ = $2 }
+    | '{' expr '}'
+    { $$ = $2 }
+    | '[' expr ']'
     { $$ = $2 }
     | expr '+' expr
     { $$ = BinOpExpr{left: $1, operator: '+', right: $3} }
@@ -78,3 +67,10 @@ expr
     { $$ = BinOpExpr{left: $1, operator: '/', right: $3} }
 
 %%
+
+func parse(r io.Reader) *Lexer {
+	l := new(Lexer)
+	l.Init(r)
+	yyParse(l)
+	return l
+}

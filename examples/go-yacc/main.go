@@ -8,19 +8,16 @@ import (
 )
 
 func main() {
-	l := new(Lexer)
-	l.Init(strings.NewReader(os.Args[1]))
-	//go:generate goyacc -o parser.go parser.go.y
-	yyParse(l)
+	l := parse(strings.NewReader(os.Args[1]))
 	fmt.Fprintf(os.Stderr, "%#v\n", l.result)
-	fmt.Println(Eval(l.result))
+	fmt.Println(eval(l.result))
 }
 
-func Eval(e Expression) int {
+func eval(e Expression) int {
 	switch e.(type) {
 	case BinOpExpr:
-		left := Eval(e.(BinOpExpr).left)
-		right := Eval(e.(BinOpExpr).right)
+		left := eval(e.(BinOpExpr).left)
+		right := eval(e.(BinOpExpr).right)
 
 		switch e.(BinOpExpr).operator {
 		case '+':
