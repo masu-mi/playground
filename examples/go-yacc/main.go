@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	l := parse(strings.NewReader(os.Args[1]))
+	l, _ := parse(strings.NewReader(os.Args[1]))
 	fmt.Fprintf(os.Stderr, "%#v\n", l.result)
 	fmt.Println(eval(l.result))
 }

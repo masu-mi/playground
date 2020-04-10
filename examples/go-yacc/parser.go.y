@@ -2,6 +2,7 @@
 package main
 
 import (
+    "errors"
     "io"
 )
 
@@ -67,10 +68,13 @@ expr
     { $$ = BinOpExpr{left: $1, operator: '/', right: $3} }
 
 %%
+var ErrParse = errors.New("parse error")
 
-func parse(r io.Reader) *Lexer {
+func parse(r io.Reader) (*Lexer, error) {
 	l := new(Lexer)
 	l.Init(r)
-	yyParse(l)
-	return l
+  if yyParse(l) != 0 {
+    return l, ErrParse
+  }
+	return l, nil
 }

@@ -8,6 +8,7 @@ import __yyfmt__ "fmt"
 //line parser.go.y:2
 
 import (
+	"errors"
 	"io"
 )
 
@@ -27,7 +28,7 @@ type BinOpExpr struct {
 	right    Expression
 }
 
-//line parser.go.y:25
+//line parser.go.y:26
 type yySymType struct {
 	yys   int
 	token Token
@@ -61,13 +62,17 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.go.y:69
+//line parser.go.y:70
 
-func parse(r io.Reader) *Lexer {
+var ErrParse = errors.New("parse error")
+
+func parse(r io.Reader) (*Lexer, error) {
 	l := new(Lexer)
 	l.Init(r)
-	yyParse(l)
-	return l
+	if yyParse(l) != 0 {
+		return l, ErrParse
+	}
+	return l, nil
 }
 
 //line yacctab:1
@@ -484,62 +489,62 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.go.y:42
+//line parser.go.y:43
 		{
 			yyVAL.expr = yyDollar[1].expr
 			yylex.(*Lexer).result = yyVAL.expr
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.go.y:49
+//line parser.go.y:50
 		{
 			yyVAL.expr = NumExpr{literal: yyDollar[1].token.literal, token: yyDollar[1].token.token}
 		}
 	case 3:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:53
+//line parser.go.y:54
 		{
 			yyVAL.expr = yyDollar[2].expr
 		}
 	case 4:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:55
+//line parser.go.y:56
 		{
 			yyVAL.expr = yyDollar[2].expr
 		}
 	case 5:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:57
+//line parser.go.y:58
 		{
 			yyVAL.expr = yyDollar[2].expr
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:59
+//line parser.go.y:60
 		{
 			yyVAL.expr = yyDollar[2].expr
 		}
 	case 7:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:61
+//line parser.go.y:62
 		{
 			yyVAL.expr = BinOpExpr{left: yyDollar[1].expr, operator: '+', right: yyDollar[3].expr}
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:63
+//line parser.go.y:64
 		{
 			yyVAL.expr = BinOpExpr{left: yyDollar[1].expr, operator: '-', right: yyDollar[3].expr}
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:65
+//line parser.go.y:66
 		{
 			yyVAL.expr = BinOpExpr{left: yyDollar[1].expr, operator: '*', right: yyDollar[3].expr}
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:67
+//line parser.go.y:68
 		{
 			yyVAL.expr = BinOpExpr{left: yyDollar[1].expr, operator: '/', right: yyDollar[3].expr}
 		}
