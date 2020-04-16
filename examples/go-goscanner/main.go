@@ -7,11 +7,7 @@ import (
 )
 
 func main() {
-	src := []byte(`
-  val x = 100.0
-
-  cos(x) + 1i*sin(x) // Euler
-  `)
+	src := []byte("val x = 100.0; cos(x) + 1i*sin(x) \"string?\" `string?` // Euler")
 
 	x := 1i*(3+4i) + 2i
 	fmt.Println(x)
