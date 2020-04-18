@@ -1,5 +1,13 @@
 grammar Calc;
 
+@header {
+// in @header
+}
+
+@members {
+// in @members
+}
+
 prog:   expr NEWLINE*;
 expr:   '(' expr_=expr ')'
     |   left=expr op=('*'|'/') right=expr
