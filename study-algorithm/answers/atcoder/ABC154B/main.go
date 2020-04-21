@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -24,11 +24,7 @@ func resolve(r io.Reader) {
 	sc.Buffer(buf, maxBufSize)
 	sc.Split(bufio.ScanWords) // bufio.ScanLines
 	s := scanString(sc)
-	b := bytes.NewBuffer([]byte{})
-	for i := 0; i < len(s); i++ {
-		b.WriteString("x")
-	}
-	fmt.Println(b.String())
+	fmt.Println(strings.Repeat("x", len(s)))
 }
 
 // snip-scan-funcs
