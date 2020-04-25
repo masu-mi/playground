@@ -16,22 +16,22 @@ func main() {
 	fmt.Printf("^a+1        : b%016b\n", uint16(^i+1))
 	fmt.Printf("^a+1        : b%016b\n", (^i + 1))
 	fmt.Printf("-a          : b%016b\n", -i)
-	for i := range bitCombination(3) {
+	for i := range bitCombinations(3) {
 		fmt.Printf("%03b\n", i)
 	}
 
 	vals := []int{0, 1, 3}
 
-	for i := range bitCombinationOverSubsets(vals...) {
+	for i := range bitCombinationsOverSubsets(vals...) {
 		fmt.Printf("%04b\n", i)
 	}
 
-	for i := range bitCombinationWithSize(5, 3) {
+	for i := range bitCombinationsWithSize(5, 3) {
 		fmt.Printf("%05b\n", i)
 	}
 }
 
-func bitCombination(num int) chan uint {
+func bitCombinations(num int) chan uint {
 	ch := make(chan uint)
 	go func() {
 		defer close(ch)
@@ -42,7 +42,7 @@ func bitCombination(num int) chan uint {
 	return ch
 }
 
-func bitCombinationOverSubsets(nums ...int) chan uint {
+func bitCombinationsOverSubsets(nums ...int) chan uint {
 	ch := make(chan uint)
 	s := uint(0)
 	for _, v := range nums {
@@ -60,7 +60,7 @@ func bitCombinationOverSubsets(nums ...int) chan uint {
 	return ch
 }
 
-func bitCombinationWithSize(num, size int) chan uint {
+func bitCombinationsWithSize(num, size int) chan uint {
 	ch := make(chan uint)
 	bit := uint(1<<uint(size) - 1)
 	go func() {
