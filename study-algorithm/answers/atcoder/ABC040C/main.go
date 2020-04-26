@@ -60,6 +60,14 @@ func changeToMin(v *int, cand int) (updated bool) {
 	return updated
 }
 
+func changeToMax(v *int, cand int) (updated bool) {
+	if *v < cand {
+		*v = cand
+		updated = true
+	}
+	return updated
+}
+
 // snip-scan-funcs
 func scanInt(sc *bufio.Scanner) int {
 	sc.Scan()
