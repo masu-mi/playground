@@ -44,8 +44,12 @@ func resolve(n, w int, ws, vs []int) int {
 	for i := 1; i < n; i++ { // 0-indexed
 		states[i] = make([]int, w)
 		for j := 0; j < w; j++ {
-			if j+1-ws[i] > 0 {
-				changeToMax(&(states[i][j]), states[i-1][j+1-ws[i]]+vs[i])
+			if j+1-ws[i] >= 0 {
+				if j+1-ws[i] == 0 {
+					changeToMax(&(states[i][j]), vs[i])
+				} else {
+					changeToMax(&(states[i][j]), states[i-1][j-ws[i]]+vs[i])
+				}
 			}
 			changeToMax(&(states[i][j]), states[i-1][j])
 		}
