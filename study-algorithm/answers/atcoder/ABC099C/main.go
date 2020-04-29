@@ -49,20 +49,11 @@ func resolve(n int) int {
 }
 
 const (
-	inf  = math.MaxInt32
-	ninf = math.MinInt32
+	inf = math.MaxInt32
 )
 
 func changeToMin(v *int, cand int) (updated bool) {
 	if *v > cand {
-		*v = cand
-		updated = true
-	}
-	return updated
-}
-
-func changeToMax(v *int, cand int) (updated bool) {
-	if *v < cand {
 		*v = cand
 		updated = true
 	}
@@ -74,8 +65,4 @@ func scanInt(sc *bufio.Scanner) int {
 	sc.Scan()
 	i, _ := strconv.Atoi(sc.Text())
 	return int(i)
-}
-func scanString(sc *bufio.Scanner) string {
-	sc.Scan()
-	return sc.Text()
 }
