@@ -77,39 +77,39 @@ func changeToMax(v *int, cand int) (updated bool) {
 	return updated
 }
 
-type candidates []node
-
 type node struct {
 	id, cost int
 }
 
-func (c *candidates) Len() int {
-	return len(*c)
+type candidates []node
+
+func (h *candidates) Len() int {
+	return len(*h)
 }
 
-func (c *candidates) Less(i, j int) bool {
-	nodes := *c
-	return nodes[i].cost < nodes[j].cost
+func (h *candidates) Less(i, j int) bool {
+	items := *h
+	return items[i].cost < items[j].cost
 }
 
-func (c *candidates) Swap(i, j int) {
-	nodes := *c
-	nodes[i], nodes[j] = nodes[j], nodes[i]
+func (h *candidates) Swap(i, j int) {
+	items := *h
+	items[i], items[j] = items[j], items[i]
 }
 
-func (c *candidates) Push(x interface{}) {
-	*c = append(*c, x.(node))
+func (h *candidates) Push(x interface{}) {
+	*h = append(*h, x.(node))
 }
 
-func (c *candidates) Pop() interface{} {
-	nodes := *c
-	l := nodes[len(nodes)-1]
-	*c = nodes[0 : len(nodes)-1]
+func (h *candidates) Pop() interface{} {
+	items := *h
+	l := items[len(items)-1]
+	*h = items[0 : len(items)-1]
 	return l
 }
 
-func (c *candidates) top() node {
-	return (*c)[c.Len()-1]
+func (h *candidates) top() node {
+	return (*h)[h.Len()-1]
 }
 
 // snip-scan-funcs
