@@ -32,7 +32,12 @@ func resolve(r io.Reader) {
 		fmt.Printf("Invalid Input %v\n", nums)
 		os.Exit(1)
 	}
-	i := lowerBound(len(nums), func(i int) bool {
+	i := lowerBoundOrig(len(nums), func(i int) bool {
+		return nums[i] >= m
+	})
+	fmt.Printf(">= m: %d at %d, %v\n", m, i, nums)
+
+	i = lowerBound(len(nums), func(i int) bool {
 		return nums[i] >= m
 	})
 	fmt.Printf(">= m: %d at %d, %v\n", m, i, nums)
@@ -46,6 +51,21 @@ func resolve(r io.Reader) {
 		return nums[i] <= m
 	})
 	fmt.Printf("<= m: %d at %d, %v\n", m, i, nums)
+}
+
+func lowerBoundOrig(n int, f func(i int) bool) int {
+	left := -1
+	right := n
+
+	for right-left > 1 {
+		mid := left + (right-left)/2
+		if f(mid) {
+			right = mid
+		} else {
+			left = mid
+		}
+	}
+	return right
 }
 
 func lowerBound(n int, f func(i int) bool) int {
