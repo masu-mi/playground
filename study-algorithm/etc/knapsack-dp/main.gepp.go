@@ -35,6 +35,7 @@ func parseProblem(r io.Reader) (int, [][]int) {
 }
 
 func resolve(t int, gains [][]int) int {
+	// dp := max value of plan ends bofore `t`.
 	// dp[t] = max_{0<=i<j<t}( dp[i] + v[i][j] )
 	// init
 	dp := make([]int, t+2)
