@@ -38,6 +38,7 @@ func resolve(r io.Reader) {
 		uniq(pys[i])
 	}
 	for i := 0; i < m; i++ {
+		// reverse: 1-indexed from 0-indexed
 		fmt.Printf("%06d", ps[i]+1)
 		idx := sort.Search(len(pys[ps[i]]), func(idx int) bool {
 			return pys[ps[i]][idx] >= ys[i]
