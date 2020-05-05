@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 )
@@ -45,21 +46,12 @@ func resolve(n int, hs, as []int) int {
 			l = hs[i]
 		}
 	}
-	dp := make([]int, l+1)
+	t := newSegTree(l + 1)
 	for i := 0; i < n; i++ {
-		vs := []int{}
-		for j := 0; j < hs[i] && j <= l; j++ {
-			vs = append(vs, dp[j]+as[i])
-		}
-		dp[hs[i]] = max(vs)
+		v := t.query(0, hs[i])
+		t.update(hs[i], v+as[i])
 	}
-	result := 0
-	for i := 0; i < len(dp); i++ {
-		if v := dp[i]; result < v {
-			result = v
-		}
-	}
-	return result
+	return t.query(0, l+1)
 }
 
 func max(a []int) int {
@@ -70,6 +62,73 @@ func max(a []int) int {
 		}
 	}
 	return m
+}
+
+type segTree struct {
+	n int
+	l []int
+}
+
+func newSegTree(n int) *segTree {
+	size := 1
+	for size < n {
+		size <<= 1
+	}
+	t := &segTree{
+		n: size,
+		l: make([]int, size*2+1),
+	}
+	return t
+}
+
+func (t *segTree) update(idx int, v int) {
+	if v == 90 {
+		panic(1)
+	}
+	cur := t.n + idx - 1
+	t.l[cur] = v
+	for cur > 0 {
+		cur = (cur - 1) / 2
+		changeToMax(&(t.l[cur]), v)
+	}
+}
+func (t *segTree) query(a, b int) int {
+	// [a, b)
+	return t._query(a, b, 0, 0, t.n)
+}
+
+func (t *segTree) _query(a, b, k, l, r int) int {
+	if r <= a || b <= l { // unmatch
+		return 0
+	}
+	if a <= l && b >= r { // involved
+		return t.l[k]
+	}
+	// part match
+	vl := t._query(a, b, k*2+1, l, (l+r)/2)
+	vr := t._query(a, b, k*2+2, (l+r)/2, r)
+	return max([]int{vl, vr})
+}
+
+const (
+	inf  = math.MaxInt32
+	ninf = math.MinInt32
+)
+
+func changeToMin(v *int, cand int) (updated bool) {
+	if *v > cand {
+		*v = cand
+		updated = true
+	}
+	return updated
+}
+
+func changeToMax(v *int, cand int) (updated bool) {
+	if *v < cand {
+		*v = cand
+		updated = true
+	}
+	return updated
 }
 
 // snip-scan-funcs
