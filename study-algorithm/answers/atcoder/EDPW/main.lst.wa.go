@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 )
@@ -36,7 +37,7 @@ type query struct {
 }
 
 func resolve(n int, qs map[int][]query) int {
-	t := newLazySegTree(n)
+	t := newLazySegTree(n + 1)
 	for i := 1; i <= n+1; i++ {
 		max := t.max(0, i)
 		sum := 0
@@ -84,7 +85,7 @@ func (t *lazySegTree) _max(a, b, k, l, r int) int {
 	} else if a < r && l < b {
 		return max(t._max(a, b, 2*k+1, l, (l+r)>>1), t._max(a, b, 2*k+2, (l+r)>>1, r))
 	}
-	return 0
+	return math.MinInt32
 }
 
 func (t *lazySegTree) update(a, b, v int) {
