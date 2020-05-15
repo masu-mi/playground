@@ -33,13 +33,13 @@ func resolve(n, m, k int) int {
 	moduloCombiInit(modulo)
 	result := 0
 	for i := 0; i <= k; i++ {
-		p := moduloPow(m, i+1, modulo)
-		cp := moduloPow(m-1, n-1-i, modulo)
-		// com := moduloCombi(n-1, i, modulo)
 		result = moduloAdd(
 			result,
-			// moduloMul(com, moduloMul(p, cp, modulo), modulo),
-			moduloMul(p, cp, modulo),
+			moduloMul(
+				moduloMul(m, moduloCombi(n-1, i, modulo), modulo),
+				moduloPow(m-1, n-1-i, modulo),
+				modulo,
+			),
 			modulo,
 		)
 		// fmt.Printf("%d, %d, %d, %d\n", i, p, cp, result)
