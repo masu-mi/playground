@@ -1,5 +1,6 @@
 from pulp import *
 import networkx as nx
+
 g = nx.fast_gnp_random_graph(8, 0.26, 1).to_directed()
 source, sink = 0, 2 # 始点, 終点
 r = list(enumerate(g.edges()))
