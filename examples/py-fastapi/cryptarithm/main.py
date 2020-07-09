@@ -1,0 +1,39 @@
+# vim: fileencoding=utf-8
+
+import fire
+import uvicorn
+
+from fastapi import FastAPI
+
+from parse import Parser
+from lexer import Token
+from problem import Problem
+
+app = FastAPI()
+
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int, q: str = None):
+    return {"item_id": item_id, "q": q}
+
+class Cli(object):
+    def __init__(self, offset=1):
+        self._offset = offset
+
+    def server(self, port=8000):
+        """start `Hello World` server"""
+        uvicorn.run(app, host='0.0.0.0', port=port)
+
+    def cryptarithm(self, expr = ""):
+        """solve cryptalithm problem"""
+        print("Problem: {}".format(expr))
+
+        p = Parser(Token.tokenize(expr))
+        pr = Problem(p.parse())
+        print(pr.search_all_solution())
+
+if __name__ == '__main__':
+    fire.Fire(Cli)

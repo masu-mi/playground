@@ -3,7 +3,7 @@
 from __future__ import print_function
 from ortools.sat.python import cp_model
 
-from ast import Op,EqExp,Var
+from node import Op,EqExp,Var
 from callbacks import VarArraySolutionPrinter
 
 

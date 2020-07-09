@@ -1,8 +1,7 @@
 # coding: utf-8
 
-from token import Token
-from ast import Op,EqExp,Var
-from problem import *
+from lexer import Token
+from node import Op,EqExp,Var
 
 """
 Parse
@@ -54,11 +53,3 @@ class Parser:
             else:
                 break
         return ex
-
-if __name__ == '__main__':
-    # debug code
-    raw = "KOI - AI = DRY"
-    p = Parser(Token.tokenize(raw))
-    ast = p.parse()
-    p = Problem(ast)
-    print(p.search_all_solution())

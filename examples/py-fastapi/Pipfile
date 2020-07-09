@@ -17,6 +17,7 @@ scipy = "*"
 networkx = "*"
 camelot-py = "*"
 ortools = "*"
+fire = "*"
 
 [requires]
 python_version = "3.8"
