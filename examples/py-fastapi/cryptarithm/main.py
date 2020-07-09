@@ -13,11 +13,14 @@ app = FastAPI()
 
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
+    return {"accessible_path": ["/docs", "/cryptarithm"]}
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/cryptarithm/")
+async def solve_cryptarithm(expr: str = None):
+    p = Parser(Token.tokenize(expr))
+    pr = Problem(p.parse())
+    _, solutions = pr.search_all_solution()
+    return {"problem": expr, "answer": solutions}
 
 class Cli(object):
     def __init__(self, offset=1):
@@ -28,7 +31,7 @@ class Cli(object):
         uvicorn.run(app, host='0.0.0.0', port=port)
 
     def cryptarithm(self, expr = ""):
-        """solve cryptalithm problem"""
+        """solve cryptarithm problem"""
         print("Problem: {}".format(expr))
 
         p = Parser(Token.tokenize(expr))

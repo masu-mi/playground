@@ -26,7 +26,7 @@ class Problem:
         model, variables = self.ortools_model()
         solution_printer = VarArraySolutionPrinter(variables.values())
         status = solver.SearchForAllSolutions(model, solution_printer)
-        return status
+        return (status, solution_printer.solutions)
 
     def build_expr(self, variables, node):
         if type(node) is Var:
