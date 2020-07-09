@@ -23,4 +23,4 @@ fire = "*"
 python_version = "3.8"
 
 [scripts]
-parse = "python cryptarithm/parse.py"
+cli = "python ./cryptarithm/main.py"
