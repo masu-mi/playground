@@ -1,36 +1,36 @@
 # vim: fileencoding=utf-8
 
-import fire
-import uvicorn
-
+import fire, uvicorn
 from fastapi import FastAPI
 
 from parse import Parser
 from lexer import Token
 from problem import Problem
 
+from typing import Dict,List,Any
+
 app = FastAPI()
 
 @app.get("/")
-async def read_root():
+async def read_root() -> Dict[str, List[str]]:
     return {"accessible_path": ["/docs", "/cryptarithm"]}
 
 @app.get("/cryptarithm/")
-async def solve_cryptarithm(expr: str = None):
+async def solve_cryptarithm(expr: str = '') -> Dict[str, Any]:
     p = Parser(Token.tokenize(expr))
     pr = Problem(p.parse())
     status, solutions = pr.search_all_solution()
     return {"problem": expr, "answer": solutions, "status": status}
 
 class Cli(object):
-    def __init__(self, offset=1):
-        self._offset = offset
+    def __init__(self):
+        pass
 
-    def server(self, port=8000):
+    def server(self, port: int = 8000):
         """start `Hello World` server"""
         uvicorn.run(app, host='0.0.0.0', port=port)
 
-    def cryptarithm(self, expr = ""):
+    def cryptarithm(self, expr: str = ""):
         """solve cryptarithm problem"""
         print("Problem: {}".format(expr))
 

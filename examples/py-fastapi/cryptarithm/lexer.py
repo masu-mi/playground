@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from typing import Iterator
 
 class Token:
 
@@ -8,7 +9,7 @@ class Token:
     OP = 2
     operators = {'+', '-', '='}
 
-    def __init__(self, token):
+    def __init__(self, token: str) -> None:
         self.text = token
         self.type = self.VARIABLE
         if token in self.operators:
@@ -17,21 +18,21 @@ class Token:
             self.type = self.EOF
         return
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if other is None or type(self) != type(other): return False
         return self.__dict__ == other.__dict__
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
     @classmethod
-    def tokenize(cls, raw):
+    def tokenize(cls, raw: str) -> Iterator[Token]:
         internal = cls._split(raw)
         for token in internal:
             if token != '':
                 yield Token(token)
 
     @classmethod
-    def _split(cls, raw):
+    def _split(cls, raw: str) -> Iterator[str]:
         last = -1
         for i in range(len(raw)):
             if raw[i] == " ":
