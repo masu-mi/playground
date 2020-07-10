@@ -17,14 +17,17 @@ class Token:
             self.type = self.EOF
         return
 
+    def __eq__(self, other):
+        return self.text == other.text and self.type == other.type
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def tokenize(cls, raw):
         internal = cls._split(raw)
         for token in internal:
             if token != '':
                 yield Token(token)
-        while True:
-            yield Token('')
 
     @classmethod
     def _split(cls, raw):
