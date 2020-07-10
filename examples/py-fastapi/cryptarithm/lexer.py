@@ -18,7 +18,8 @@ class Token:
         return
 
     def __eq__(self, other):
-        return self.text == other.text and self.type == other.type
+        if other is None or type(self) != type(other): return False
+        return self.__dict__ == other.__dict__
     def __ne__(self, other):
         return not self.__eq__(other)
 
