@@ -18,6 +18,7 @@ class Problem:
     def ortools_model(self):
         model = cp_model.CpModel()
         variables = self.get_model_variables(model)
+        model.AddAllDifferent(variables.values())
         model.Add(self.build_expr(variables, self.ast))
         return (model, variables)
 
@@ -26,7 +27,7 @@ class Problem:
         model, variables = self.ortools_model()
         solution_printer = VarArraySolutionPrinter(variables.values())
         status = solver.SearchForAllSolutions(model, solution_printer)
-        return (status, solution_printer.solutions)
+        return (solver.StatusName(status), solution_printer.solutions)
 
     def build_expr(self, variables, node):
         if type(node) is Var:

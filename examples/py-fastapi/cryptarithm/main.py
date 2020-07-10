@@ -19,8 +19,8 @@ async def read_root():
 async def solve_cryptarithm(expr: str = None):
     p = Parser(Token.tokenize(expr))
     pr = Problem(p.parse())
-    _, solutions = pr.search_all_solution()
-    return {"problem": expr, "answer": solutions}
+    status, solutions = pr.search_all_solution()
+    return {"problem": expr, "answer": solutions, "status": status}
 
 class Cli(object):
     def __init__(self, offset=1):
