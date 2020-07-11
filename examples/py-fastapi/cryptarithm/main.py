@@ -3,8 +3,8 @@
 import fire, uvicorn
 from fastapi import FastAPI
 
+from lexer import tokenize
 from parse import Parser
-from lexer import Token
 from problem import Problem
 
 from typing import Dict,List,Any
@@ -17,7 +17,7 @@ async def read_root() -> Dict[str, List[str]]:
 
 @app.get("/cryptarithm/")
 async def solve_cryptarithm(expr: str = '') -> Dict[str, Any]:
-    p = Parser(Token.tokenize(expr))
+    p = Parser(tokenize(expr))
     pr = Problem(p.parse())
     status, solutions = pr.search_all_solution()
     return {"problem": expr, "answer": solutions, "status": status}
@@ -34,7 +34,7 @@ class Cli(object):
         """solve cryptarithm problem"""
         print("Problem: {}".format(expr))
 
-        p = Parser(Token.tokenize(expr))
+        p = Parser(tokenize(expr))
         pr = Problem(p.parse())
         print(pr.search_all_solution())
 
