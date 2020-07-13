@@ -19,7 +19,6 @@ def count_in_special_column(DF, check_column):
     df = df.groupby([check_column]).size()
     df = df.reset_index(name='count')
     df = df.sort_values(by='count', ascending=True)
-    
     return df
 
 ### 横棒グラフ化する関数。引数Xはカウントする列名、引数Yは数えた数（'count'）
@@ -27,7 +26,6 @@ def xy_plot(DF, X, Y):
     print(DF)
     df_x = DF[X]
     df_y = DF[Y]
-    
     y_np = np.array(df_y)
     plt.figure(figsize=(8,10))
     plt.barh(range(len(df_x)), df_y, tick_label=df_x, align="center", color="magenta", height=0.8)
