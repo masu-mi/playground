@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import copy
 import random
 from typing import Any,Callable,List
 from .card import Card,Suit,simple_index
@@ -8,7 +9,7 @@ class Deck():
     cards: List[Card]
 
     def __init__(self, cards: List[Card] = []):
-        self.cards = cards
+        self.cards = copy.deepcopy(cards)
 
     def push(self, c: Card) -> None:
         self.cards.append(c)
