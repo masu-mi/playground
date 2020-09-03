@@ -35,9 +35,9 @@ func TestShuffle(t *testing.T) {
 
 	var startState, shuffledState []Card
 	for i, n := range []int{11, 7, 6, 10, 5, 9, 2, 12, 4, 1, 8, 3, 13} {
-		card := Card{Suit: Spades, Number: i + 1}
+		card := NormalCard(Spades, i+1)
 		startState = append(startState, card)
-		shuffledState = append(shuffledState, Card{Suit: Spades, Number: n})
+		shuffledState = append(shuffledState, NormalCard(Spades, n))
 		d.Push(card)
 	}
 
@@ -57,9 +57,9 @@ func TestSort(t *testing.T) {
 
 	var startState, sortedState []Card
 	for i, n := range []int{11, 7, 6, 10, 5, 9, 2, 12, 4, 1, 8, 3, 13} {
-		card := Card{Suit: Spades, Number: n}
+		card := NormalCard(Spades, n)
 		startState = append(startState, card)
-		sortedState = append(sortedState, Card{Suit: Spades, Number: i + 1})
+		sortedState = append(sortedState, NormalCard(Spades, i+1))
 		d.Push(card)
 	}
 

@@ -19,14 +19,14 @@ type Card struct {
 	SpecialName  string
 }
 
-func NewNormalCard(s int, n int) Card {
+func NormalCard(s int, n int) Card {
 	return Card{Suit: s, Number: n}
 }
-func NewSpecialCard(name string) Card {
+func SpecialCard(name string) Card {
 	return Card{SpecialName: name}
 }
-func NewJoker() Card {
-	return NewSpecialCard(joker)
+func Joker() Card {
+	return SpecialCard(joker)
 }
 
 func (c Card) Valid() bool {
