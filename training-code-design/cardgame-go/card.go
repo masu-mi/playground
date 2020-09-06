@@ -1,5 +1,7 @@
 package cardgame
 
+import "fmt"
+
 const (
 	forSpecialCards = 0 + iota
 
@@ -27,6 +29,24 @@ func SpecialCard(name string) Card {
 }
 func Joker() Card {
 	return SpecialCard(joker)
+}
+
+func (c Card) Strign() string {
+	if c.IsSpecial() {
+		return fmt.Sprintf("[%s]", c.SpecialName)
+	}
+	var s string
+	switch c.Suit {
+	case Clubs:
+		s = "♣︎"
+	case Diamonds:
+		s = "♢"
+	case Hearts:
+		s = "♡"
+	case Spades:
+		s = "♠︎"
+	}
+	return fmt.Sprintf("[%s,%d]", s, c.Number)
 }
 
 func (c Card) Valid() bool {

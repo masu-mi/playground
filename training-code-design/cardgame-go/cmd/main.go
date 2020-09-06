@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/masu-mi/playground/training-code-design/cardgame-go"
+	"github.com/masu-mi/playground/training-code-design/cardgame-go/blackjack"
 	"github.com/spf13/cobra"
 )
 
@@ -39,13 +41,13 @@ func newFoobarCommand() *cobra.Command {
 
 func newSubCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "head",
+		Use:   "blackjack",
 		Short: "Example short usage",
 		Args:  cobra.MaximumNArgs(3),
 		RunE: func(_ *cobra.Command, args []string) error {
 			fmt.Println("[Start] Subcommand head")
-			fmt.Printf("%v\n", args)
-			//
+			rs := cardgame.NewRounds(blackjack.NewBlackjack(), []string{"cli"})
+			rs.PlayAllRound()
 			return nil
 		},
 	}
