@@ -31,7 +31,18 @@ func Joker() Card {
 	return SpecialCard(joker)
 }
 
-func (c Card) Strign() string {
+func NormalCards(set int) (cards []Card) {
+	for i := 0; i < set; i++ {
+		for j := 1; j <= 13; j++ {
+			for _, s := range []int{Clubs, Diamonds, Hearts, Spades} {
+				cards = append(cards, NormalCard(s, j))
+			}
+		}
+	}
+	return cards
+}
+
+func (c Card) String() string {
 	if c.IsSpecial() {
 		return fmt.Sprintf("[%s]", c.SpecialName)
 	}
@@ -46,7 +57,20 @@ func (c Card) Strign() string {
 	case Spades:
 		s = "♠︎"
 	}
-	return fmt.Sprintf("[%s,%d]", s, c.Number)
+	var num string
+	switch c.Number {
+	case 11:
+		num = "J"
+	case 12:
+		num = "Q"
+	case 13:
+		num = "K"
+	case 1:
+		num = "A"
+	default:
+		num = fmt.Sprintf("%d", c.Number)
+	}
+	return fmt.Sprintf("[%s,%s]", s, num)
 }
 
 func (c Card) Valid() bool {

@@ -43,9 +43,8 @@ func (r *Rounds) PlayRound(round int) {
 }
 
 func (r *Rounds) Update(result Result) {
-	for i := 0; i < result.Winning; i++ {
-		id := result.Ranking[i]
-		r.Players[id].Score += result.Scores[id]
+	for id := range result.Scores {
+		r.Players[id].Status.Score += result.Scores[id]
 	}
 }
 
@@ -55,9 +54,7 @@ type Game interface {
 }
 
 type Result struct {
-	Ranking []int
-	Winning int
-	Scores  map[int]int
+	Scores map[int]int
 }
 
 type Player struct {

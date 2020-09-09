@@ -15,9 +15,13 @@ type Deck struct {
 }
 
 // NewDeck returns empty Deck
-func NewDeck() *Deck {
+func NewDeck(cards []Card) *Deck {
 	t := time.Now()
-	return &Deck{Rand: rand.New(rand.NewSource(t.UnixNano()))}
+	return &Deck{
+		Rand:   rand.New(rand.NewSource(t.UnixNano())),
+		cards:  cards,
+		number: len(cards),
+	}
 }
 
 // ErrEmptyDeck is a error

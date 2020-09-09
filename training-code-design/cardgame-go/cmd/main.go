@@ -46,8 +46,21 @@ func newSubCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(3),
 		RunE: func(_ *cobra.Command, args []string) error {
 			fmt.Println("[Start] Subcommand head")
-			rs := cardgame.NewRounds(blackjack.NewBlackjack(), []string{"cli"})
+			fmt.Println("Name?")
+			var name string
+			fmt.Scan(&name)
+			rs := cardgame.NewRounds(blackjack.NewBlackjack(), []string{name})
 			rs.PlayAllRound()
+			var result string
+			switch rs.Players[0].Score {
+			case 1:
+				result = "Win"
+			case 0:
+				result = "Draw"
+			default:
+				result = "Loose"
+			}
+			fmt.Printf("%s: %s\n", name, result)
 			return nil
 		},
 	}
