@@ -6,9 +6,9 @@ type Rounds struct {
 	Players map[int]*Player
 }
 
-func NewRounds(game Game, names []string) *Rounds {
+func NewRounds(factory GameFactory, names []string) *Rounds {
 	players := NewPlayers(names)
-	game.RegisterPlayers(players...)
+	game := factory(players...)
 	r := &Rounds{
 		Rounds:  []Game{game},
 		Players: map[int]*Player{},
@@ -48,8 +48,9 @@ func (r *Rounds) Update(result Result) {
 	}
 }
 
+type GameFactory func(playerNames ...*Player) Game
+
 type Game interface {
-	RegisterPlayers(playerNames ...*Player)
 	Play() Result
 }
 

@@ -49,7 +49,7 @@ func newSubCommand() *cobra.Command {
 			fmt.Println("Name?")
 			var name string
 			fmt.Scan(&name)
-			rs := cardgame.NewRounds(blackjack.NewBlackjack(), []string{name})
+			rs := cardgame.NewRounds(blackjack.NewGame, []string{name})
 			rs.PlayAllRound()
 			var result string
 			switch rs.Players[0].Score {

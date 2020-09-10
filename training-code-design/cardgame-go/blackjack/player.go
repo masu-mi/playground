@@ -6,19 +6,28 @@ import (
 	"github.com/masu-mi/playground/training-code-design/cardgame-go"
 )
 
-type Player interface {
-	ID() int
-	Name() string
-	Choice(c []cardgame.Card) Choice
+type cmdChoice func(c []cardgame.Card) Choice
+
+type Player struct {
+	id     int
+	name   string
+	hand   hand
+	choice cmdChoice
 }
 
-var _ Player = &CliPlayer{}
-
-type CliPlayer struct {
-	*cardgame.Player
+func (p *Player) Choice() Choice {
+	return p.choice(p.hand)
 }
 
-func (c *CliPlayer) Choice(cards []cardgame.Card) Choice {
+func cliPlayer(p *cardgame.Player) *Player {
+	return &Player{
+		id:     p.ID,
+		name:   p.Name,
+		choice: choiceFromStdin,
+	}
+}
+
+func choiceFromStdin(cards []cardgame.Card) Choice {
 	// fmt.Printf("User(%s): %v\n", c.Player.Name, cards)
 	fmt.Println("Hit/Stand [H/S]?")
 	var choice string
@@ -31,26 +40,18 @@ func (c *CliPlayer) Choice(cards []cardgame.Card) Choice {
 	}
 	panic(-1)
 }
-func (cp *CliPlayer) Name() string {
-	return cp.Player.Name
+
+func dealer() *Player {
+	return &Player{
+		id:     -1,
+		name:   "dealer",
+		choice: choiceAsDealer,
+	}
 }
-func (cp *CliPlayer) ID() int {
-	return cp.Player.ID
-}
 
-type dealer struct{}
-
-var _ Player = &dealer{}
-
-func (c *dealer) Choice(cards []cardgame.Card) Choice {
+func choiceAsDealer(cards []cardgame.Card) Choice {
 	if hand(cards).willDealerStand() {
 		return Stand
 	}
 	return Hit
-}
-func (cp *dealer) Name() string {
-	return "dealer"
-}
-func (cp *dealer) ID() int {
-	return -1
 }

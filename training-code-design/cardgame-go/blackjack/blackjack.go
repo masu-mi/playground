@@ -2,7 +2,6 @@ package blackjack
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/masu-mi/playground/training-code-design/cardgame-go"
@@ -17,6 +16,11 @@ const (
 	Stand
 )
 
+type Game struct {
+	deck    *cardgame.Deck
+	players []*Player
+}
+
 func (c Choice) String() string {
 	switch c {
 	case Hit:
@@ -27,41 +31,34 @@ func (c Choice) String() string {
 	panic(-1)
 }
 
-type Blackjack struct {
-	deck    *cardgame.Deck
-	players []Player
-	hands   map[Player]hand
-}
+var _ cardgame.Game = &Game{}
 
-var _ cardgame.Game = &Blackjack{}
-
-func NewBlackjack() *Blackjack {
-	return &Blackjack{
-		deck:  cardgame.NewDeck(cardgame.NormalCards(6)),
-		hands: map[Player]hand{},
+func NewGame(ps ...*cardgame.Player) cardgame.Game {
+	g := &Game{
+		deck: cardgame.NewDeck(cardgame.NormalCards(6)),
 	}
+	registerPlayers(g, ps...)
+	setupTable(g)
+	return g
 }
 
-func (b *Blackjack) RegisterPlayers(ps ...*cardgame.Player) {
+func registerPlayers(g *Game, ps ...*cardgame.Player) {
 	for _, p := range ps {
-		p := &CliPlayer{Player: p}
-		b.players = append(b.players, p)
-		b.hands[p] = hand{}
+		p := cliPlayer(p)
+		g.players = append(g.players, p)
 	}
 }
 
-func (b *Blackjack) setupTable() {
+func setupTable(b *Game) {
 	b.deck.Shuffle()
-	d := &dealer{}
+	d := dealer()
 	b.players = append(b.players, d)
-	b.hands[d] = hand{}
 	// ignore burst(because burst must not be caused)
 	b.deal(2)
 }
 
-func (b *Blackjack) Play() cardgame.Result {
-	stopped := map[Player]bool{}
-	b.setupTable()
+func (b *Game) Play() cardgame.Result {
+	stopped := map[*Player]bool{}
 	var standNum, burstedNum int
 	lastOf := 0
 	for true {
@@ -75,14 +72,14 @@ func (b *Blackjack) Play() cardgame.Result {
 			if stopped[p] {
 				continue
 			}
-			c := p.Choice(b.hands[p])
+			c := p.Choice()
 			if c == Stand {
 				stopped[p] = true
 				standNum++
 				continue
 			}
 			b.dealTo(p)
-			if b.hands[p].isBurst() {
+			if p.hand.isBurst() {
 				stopped[p] = true
 				if p != b.dealer() {
 					burstedNum++
@@ -96,26 +93,19 @@ func (b *Blackjack) Play() cardgame.Result {
 	return cardgame.Result{}
 }
 
-func (b *Blackjack) playerRanking() []pair {
-	var ps []pair
-	for _, player := range b.players[:len(b.players)-1] {
-		h := b.hands[player]
-		ps = append(ps, pair{f: player.ID(), s: h.value(), h: h})
-	}
-	sort.Sort(sort.Reverse(ranking(ps)))
-	return ps
+func (b *Game) guests() []*Player {
+	return b.players[0 : len(b.players)-1]
 }
 
-func (b *Blackjack) judge(turn, stoppedNum int) (result cardgame.Result, finished bool) {
-	ranking := b.playerRanking()
+func (b *Game) judge(turn, stoppedNum int) (result cardgame.Result, finished bool) {
 	r := cardgame.Result{Scores: map[int]int{}}
-	dh := b.dealerHand()
+	dh := b.dealer().hand
 	if turn == 0 && dh.isBlackjack() {
-		for _, p := range ranking {
-			if p.h.isBlackjack() {
-				r.Scores[p.f] = 0
+		for _, p := range b.guests() {
+			if p.hand.isBlackjack() {
+				r.Scores[p.id] = 0
 			} else {
-				r.Scores[p.f] = -1
+				r.Scores[p.id] = -1
 			}
 		}
 		return r, true
@@ -124,25 +114,25 @@ func (b *Blackjack) judge(turn, stoppedNum int) (result cardgame.Result, finishe
 		return cardgame.Result{}, false
 	}
 	if dh.isBurst() {
-		for _, p := range ranking {
-			if p.h.isBurst() {
-				r.Scores[p.f] = 0
+		for _, p := range b.guests() {
+			if p.hand.isBurst() {
+				r.Scores[p.id] = 0
 			} else {
-				r.Scores[p.f] = 1
+				r.Scores[p.id] = 1
 			}
 		}
 		return r, true
 	}
 	dealerScore := dh.value()
-	for _, p := range ranking {
-		if p.h.isBurst() {
-			r.Scores[p.f] = -1
-		} else if pv := p.h.value(); pv < dealerScore {
-			r.Scores[p.f] = -1
+	for _, p := range b.guests() {
+		if p.hand.isBurst() {
+			r.Scores[p.id] = -1
+		} else if pv := p.hand.value(); pv < dealerScore {
+			r.Scores[p.id] = -1
 		} else if pv == dealerScore {
-			r.Scores[p.f] = 0
+			r.Scores[p.id] = 0
 		} else {
-			r.Scores[p.f] = 1
+			r.Scores[p.id] = 1
 		}
 	}
 	return r, true
@@ -166,31 +156,27 @@ func (r ranking) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
-func (b *Blackjack) displayTable() {
+func (b *Game) displayTable() {
 	fmt.Println("+-------------------------------+")
 	for _, p := range b.players[0 : len(b.players)-1] {
-		fmt.Printf(" %s: %v\n", p.Name(), b.hands[p])
+		fmt.Printf(" %s: %v\n", p.name, p.hand)
 	}
-	fmt.Printf(" dealer: [**], %v\n", b.dealerHand()[1:])
+	fmt.Printf(" dealer: [**], %v\n", b.dealer().hand[1:])
 	fmt.Println("+-------------------------------+")
 }
-func (b *Blackjack) displayOpenTable() {
+func (b *Game) displayOpenTable() {
 	fmt.Println("+-------------------------------+")
 	for _, p := range b.players {
-		fmt.Printf(" %s(%d): %v\n", p.Name(), b.hands[p].value(), b.hands[p])
+		fmt.Printf(" %s(%d): %v\n", p.name, p.hand.value(), p.hand)
 	}
 	fmt.Println("+-------------------------------+")
 }
 
-func (b *Blackjack) dealer() Player {
+func (b *Game) dealer() *Player {
 	return b.players[len(b.players)-1]
 }
 
-func (b *Blackjack) dealerHand() hand {
-	return b.hands[b.dealer()]
-}
-
-func (b *Blackjack) deal(n int) (num int) {
+func (b *Game) deal(n int) (num int) {
 	for i := 0; i < n; i++ {
 		for _, p := range b.players {
 			if b.dealTo(p) {
@@ -201,12 +187,12 @@ func (b *Blackjack) deal(n int) (num int) {
 	return num
 }
 
-func (b *Blackjack) dealTo(p Player) (bursted bool) {
-	h := b.hands[p]
+func (b *Game) dealTo(p *Player) (bursted bool) {
+	h := p.hand
 	// ignore error handle
 	c, _ := b.deck.Pop()
 	h = append(h, c)
-	b.hands[p] = h
+	p.hand = h
 	return h.isBurst()
 }
 
