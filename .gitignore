@@ -2,3 +2,5 @@
 tags.lock
 tags
 __pycache__
+*bin
+*dist
