@@ -1,7 +1,12 @@
 add_library(MathFunctions MathFunctions.cxx)
 
+set_property(TARGET MathFunctions PROPERTY VERSION "1.0.0")
+set_property(TARGET MathFunctions PROPERTY SOVERSION "1")
+
 target_include_directories(MathFunctions
-          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+          INTERFACE
+          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+          $<INSTALL_INTERFACE:include>
           )
 
 option(USE_MYMATH "Use tutorial provided math implementation" ON)
@@ -34,5 +39,12 @@ if(USE_MYMATH)
   target_link_libraries(MathFunctions PRIVATE SqrtLibrary)
 endif()
 
-install(TARGETS MathFunctions DESTINATION lib)
+install(TARGETS MathFunctions tutorial_compiler_flags
+  DESTINATION lib
+  EXPORT MathFunctionsTargets)
 install(FILES MathFunctions.h DESTINATION include)
+
+install(EXPORT MathFunctionsTargets
+  FILE MathFunctionsTargets.cmake
+  DESTINATION lib/cmake/MathFunctions
+)

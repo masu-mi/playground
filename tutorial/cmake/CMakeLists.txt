@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
+set(CMAKE_DEBUG_POSTFIX d)
+add_library(tutorial_compiler_flags INTERFACE)
+
+
 # set the project name
 project(Tutorial VERSION 0.1)
 
 # specify the C++ standard
-add_library(tutorial_compiler_flags INTERFACE)
 target_compile_features(tutorial_compiler_flags INTERFACE cxx_std_11)
 
 set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
@@ -28,6 +31,8 @@ add_subdirectory(MathFunctions)
 list(APPEND EXTRA_LIBS MathFunctions)
 
 add_executable(Tutorial tutorial.cxx)
+set_target_properties(Tutorial PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+
 
 target_link_libraries(Tutorial PUBLIC ${EXTRA_LIBS})
 
@@ -73,3 +78,34 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
 set(CPACK_PACKAGE_VERSION_MAJOR "${Tutorial_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${Tutorial_VERSION_MINOR}")
 include(CPack)
+
+install(EXPORT MathFunctionsTargets
+  FILE MathFunctionsTargets.cmake
+  DESTINATION lib/cmake/MathFunctions
+)
+
+include(CMakePackageConfigHelpers)
+# generate the config file that is includes the exports
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/example"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  )
+# generate the version file for the config file
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfigVersion.cmake"
+  VERSION "${Tutorial_VERSION_MAJOR}.${Tutorial_VERSION_MINOR}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+# install the configuration file
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake
+  DESTINATION lib/cmake/MathFunctions
+  )
+
+export(EXPORT MathFunctionsTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsTargets.cmake"
+)
+
