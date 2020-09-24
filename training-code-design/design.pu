@@ -1,0 +1,8 @@
+@startuml
+class Deck << (S,orchid) >>
+class Card << (S,orchid) >> {
+    suit: Integer,
+    numbder: Integer,
+}
+Deck "1" o-- "n" Card: cards
+@enduml
