@@ -4,3 +4,4 @@ tags
 __pycache__
 *bin
 *dist
+tutorial/cmake/build/
