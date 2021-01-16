@@ -1,6 +1,8 @@
 package dummy
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
 )
@@ -9,7 +11,7 @@ type HunterRepo struct{}
 
 var _ domain.HunterRepository = (*HunterRepo)(nil)
 
-func (hr *HunterRepo) FindByID(id uuid.UUID) (*domain.Hunter, error) {
+func (hr *HunterRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.Hunter, error) {
 	u, _ := uuid.NewUUID()
 	return &domain.Hunter{
 		Name:     "mock",
@@ -18,10 +20,10 @@ func (hr *HunterRepo) FindByID(id uuid.UUID) (*domain.Hunter, error) {
 	}, nil
 }
 
-func (hr *HunterRepo) Save(hunterRepo *domain.Hunter) error {
+func (hr *HunterRepo) Save(_ context.Context, hunterRepo *domain.Hunter) error {
 	return nil
 }
-func (hr *HunterRepo) Remove(hunterRepo *domain.Hunter) error {
+func (hr *HunterRepo) Remove(_ context.Context, _ *domain.Hunter) error {
 	return nil
 }
 
@@ -29,7 +31,7 @@ type MonsterRepo struct{}
 
 var _ domain.MonsterRepository = (*MonsterRepo)(nil)
 
-func (hr *MonsterRepo) FindByID(id uuid.UUID) (*domain.Monster, error) {
+func (hr *MonsterRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.Monster, error) {
 	u, _ := uuid.NewUUID()
 	return &domain.Monster{
 		Name:     "mock monster",
@@ -42,9 +44,9 @@ func (hr *MonsterRepo) FindByID(id uuid.UUID) (*domain.Monster, error) {
 	}, nil
 }
 
-func (hr *MonsterRepo) Save(_ *domain.Monster) error {
+func (hr *MonsterRepo) Save(_ context.Context, _ *domain.Monster) error {
 	return nil
 }
-func (hr *MonsterRepo) Remove(_ *domain.Monster) error {
+func (hr *MonsterRepo) Remove(_ context.Context, _ *domain.Monster) error {
 	return nil
 }

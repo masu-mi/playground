@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"log"
 
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
@@ -12,6 +13,7 @@ var Logger *log.Logger
 // AttackByUnterUsecase is written for training of writing clean architecture
 type AttackByUnterUsecase interface {
 	AttackByHunter(h *domain.Hunter, m *domain.Monster) ([]domain.Material, error)
+	AttackByHunterWithContext(ctx context.Context, h *domain.Hunter, m *domain.Monster) ([]domain.Material, error)
 }
 
 var _ AttackByUnterUsecase = (*Engine)(nil)
@@ -30,9 +32,12 @@ func NewEngine(hr domain.HunterRepository, mr domain.MonsterRepository) *Engine 
 		MonsterRepository: mr,
 	}
 }
+func (eg *Engine) AttackByHunter(h *domain.Hunter, m *domain.Monster) (profits []domain.Material, err error) {
+	return eg.AttackByHunterWithContext(context.TODO(), h, m)
+}
 
 // AttackByHunter starts to attack by hunter to passed monster.
-func (eg *Engine) AttackByHunter(h *domain.Hunter, m *domain.Monster) (profits []domain.Material, err error) {
+func (eg *Engine) AttackByHunterWithContext(ctx context.Context, h *domain.Hunter, m *domain.Monster) (profits []domain.Material, err error) {
 	logf("[DEBUG]START AttackByHunter: Hunter(%s), Monster(%s)", h.ID, m.ID)
 	defer logf("[DEBUG]  END AttackByHunter: Hunter(%s), Monster(%s)", h.ID, m.ID)
 
@@ -56,14 +61,14 @@ func (eg *Engine) AttackByHunter(h *domain.Hunter, m *domain.Monster) (profits [
 		h.DefendFrom(m.Creature)
 	}
 
-	if e := eg.HunterRepository.Save(h); e != nil {
+	if e := eg.HunterRepository.Save(ctx, h); e != nil {
 		return nil, e
 	}
 	var e error
 	if killed {
-		e = eg.MonsterRepository.Remove(m)
+		e = eg.MonsterRepository.Remove(ctx, m)
 	} else {
-		eg.MonsterRepository.Save(m)
+		eg.MonsterRepository.Save(ctx, m)
 	}
 	if e != nil {
 		return nil, e

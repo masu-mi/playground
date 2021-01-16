@@ -1,11 +1,12 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -29,52 +30,27 @@ func NewHTTPHandler(eng *usecase.Engine) http.Handler {
 }
 
 func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request) {
-	defer ioutil.ReadAll(r.Body)
+	ctx, c := context.WithTimeout(r.Context(), 1000*time.Millisecond)
+	defer c()
 
-	errNotFound := &domain.ErrNotFound{}
-	hunter, monster, err := ah.getAttackInput(w, r)
-	if errors.As(err, &errNotFound) {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	// StartTx
-	profit, err := ah.eng.AttackByHunter(hunter, monster)
-	if err != nil {
-		// Abort Tx
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	// Commit Tx
-	// if errTx
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string][]domain.Material{"item": profit})
-}
-
-func (ah *applicationHandler) getAttackInput(w http.ResponseWriter, r *http.Request) (*domain.Hunter, *domain.Monster, error) {
-	errNotFound := &domain.ErrNotFound{}
 	vars := mux.Vars(r)
 	var hunter *domain.Hunter
 	{
 		hunterID, err := getUUID(vars, "hunter_id")
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(newErrFailToParse("hunter_id", vars["hunter_id"]))
-			return nil, nil, errors.New("Fail to fetch hunter")
+			// Abort Tx
+			reportFailToParse(w, "hunter_id", vars["hunter_id"])
+			return
 		}
-		hunter, err = ah.eng.HunterRepository.FindByID(hunterID)
+		hunter, err = ah.eng.HunterRepository.FindByID(ctx, hunterID)
 		if err != nil {
+			errNotFound := &domain.ErrNotFound{}
 			if errors.As(err, &errNotFound) {
+				reportNotFoundError(w, "hunter", errNotFound)
+			} else {
 				w.WriteHeader(http.StatusBadRequest)
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(newErrNotFound("hunter", hunterID))
-				return nil, nil, errors.New("Fail to fetch hunter")
 			}
-			w.WriteHeader(http.StatusBadRequest)
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode("Server Error")
-			return nil, nil, errors.New("error")
+			return
 		}
 	}
 
@@ -82,18 +58,64 @@ func (ah *applicationHandler) getAttackInput(w http.ResponseWriter, r *http.Requ
 	{
 		monsterID, err := getUUID(vars, "monster_id")
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(newErrFailToParse("monster_id", vars["monster_id"]))
-			return nil, nil, errors.New("Fail to fetch monster")
+			reportFailToParse(w, "monster_id", vars["monster_id"])
+			return
 		}
-		monster, err = ah.eng.MonsterRepository.FindByID(monsterID)
+		monster, err = ah.eng.MonsterRepository.FindByID(ctx, monsterID)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(newErrNotFound("monster", monsterID))
-			return nil, nil, errors.New("Fail to fetch monster")
+			errNotFound := &domain.ErrNotFound{}
+			if errors.As(err, &errNotFound) {
+				reportNotFoundError(w, "monster", errNotFound)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			return
 		}
 	}
-	return hunter, monster, nil
+
+	// Begin Tx
+	profit, err := ah.eng.AttackByHunterWithContext(ctx, hunter, monster)
+	if err != nil {
+		// Abort Tx
+		errNotFound := &domain.ErrNotFound{}
+		if errors.As(err, &errNotFound) {
+			reportNotFoundError(w, "entity", errNotFound)
+		} else {
+			reportFailToParse(w, "key", "value")
+		}
+		return
+	}
+	select {
+	case <-ctx.Done():
+		ctxErr := ctx.Err()
+		if ctxErr == context.Canceled || ctxErr == context.DeadlineExceeded {
+			reportCanceled(w) // not received
+			// Abort Tx
+		}
+	}
+	// Commit Tx
+	reportProfit(w, profit)
+}
+
+func reportProfit(w http.ResponseWriter, profit []domain.Material) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string][]domain.Material{"item": profit})
+}
+
+func reportFailToParse(w http.ResponseWriter, k, v string) {
+	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(newErrFailToParse(k, v))
+}
+
+func reportNotFoundError(w http.ResponseWriter, tipe string, e *domain.ErrNotFound) {
+	w.WriteHeader(http.StatusNotFound)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(newErrNotFound(tipe, e.ID))
+}
+
+func reportCanceled(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func newErrFailToParse(name string, value string) map[string]string {

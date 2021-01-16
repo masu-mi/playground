@@ -1,10 +1,14 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // MonsterRepository persistency manager of Monster
 type MonsterRepository interface {
-	FindByID(id uuid.UUID) (*Monster, error)
-	Save(hunter *Monster) error
-	Remove(hunter *Monster) error
+	FindByID(ctx context.Context, id uuid.UUID) (*Monster, error)
+	Save(ctx context.Context, hunter *Monster) error
+	Remove(ctx context.Context, hunter *Monster) error
 }
