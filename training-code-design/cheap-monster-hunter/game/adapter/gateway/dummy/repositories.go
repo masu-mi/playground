@@ -7,23 +7,29 @@ import (
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
 )
 
-type HunterRepo struct{}
+type HunterRepo struct {
+	repo map[uuid.UUID]*domain.Hunter
+}
+
+func NewHunterRepo() *HunterRepo {
+	return &HunterRepo{repo: map[uuid.UUID]*domain.Hunter{}}
+}
 
 var _ domain.HunterRepository = (*HunterRepo)(nil)
 
 func (hr *HunterRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.Hunter, error) {
-	u, _ := uuid.NewUUID()
-	return &domain.Hunter{
-		Name:     "mock",
-		ID:       u,
-		Creature: &domain.Creature{Life: 100, AttackPower: 10, DefencePower: 20},
-	}, nil
+	if v, ok := hr.repo[id]; ok {
+		return v, nil
+	}
+	return nil, &domain.ErrNotFound{ID: id}
 }
 
-func (hr *HunterRepo) Save(_ context.Context, hunterRepo *domain.Hunter) error {
+func (hr *HunterRepo) Save(_ context.Context, h *domain.Hunter) error {
+	hr.repo[h.ID] = h
 	return nil
 }
-func (hr *HunterRepo) Remove(_ context.Context, _ *domain.Hunter) error {
+func (hr *HunterRepo) Remove(_ context.Context, h *domain.Hunter) error {
+	delete(hr.repo, h.ID)
 	return nil
 }
 
