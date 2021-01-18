@@ -3,6 +3,7 @@ package domaintest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
@@ -15,6 +16,7 @@ func DoHunterRepositoriesSemanticCheck(t *testing.T, repo domain.HunterRepositor
 		inputs = append(inputs, h)
 	}
 	t.Run("Save() and FindByID() succeed", func(t *testing.T) {
+		fmt.Println("SAVE")
 		for _, i := range inputs {
 			e := repo.Save(context.Background(), i)
 			if e != nil {
@@ -32,6 +34,7 @@ func DoHunterRepositoriesSemanticCheck(t *testing.T, repo domain.HunterRepositor
 	})
 
 	t.Run("Remove() work well", func(t *testing.T) {
+		fmt.Println("REMOVE")
 		target, other := inputs[0], inputs[1]
 		e := repo.Remove(context.Background(), target)
 		if e != nil {

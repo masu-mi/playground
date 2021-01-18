@@ -15,10 +15,11 @@ func init() {
 }
 
 func main() {
-	eng := usecase.NewEngine(&dummy.HunterRepo{}, &dummy.MonsterRepo{})
-	eng.EventSubscriber = usecase.NewEventBus(&eventLogger{})
-	handler := app.NewHTTPHandler(eng)
-
+	handler := app.NewHTTPHandler(&dummy.Gateway{
+		HunterRepo:  &dummy.HunterRepo{},
+		MonsterRepo: &dummy.MonsterRepo{},
+		EventLogger: usecase.NewEventBus(&eventLogger{}),
+	})
 	http.ListenAndServe(":8080", handler)
 }
 

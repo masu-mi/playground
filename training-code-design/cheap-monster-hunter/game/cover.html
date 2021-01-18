@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway/dummy/gateway.go (0.0%)</option>
+				
+				<option value="file1">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway/dummy/repositories.go (60.9%)</option>
+				
+				<option value="file2">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/creature.go (46.7%)</option>
+				
+				<option value="file3">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/errors.go (0.0%)</option>
+				
+				<option value="file4">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/hunter.go (0.0%)</option>
+				
+				<option value="file5">github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/monster.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package dummy
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "sync"
+
+        "github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway"
+        "github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
+        "github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/usecase"
+)
+
+// Gateway is Engine factory.
+type Gateway struct {
+        *HunterRepo
+        *MonsterRepo
+
+        EventLogger usecase.EventSubscriber
+}
+
+var _ gateway.TransactionalGateway = (*Gateway)(nil)
+
+func (g *Gateway) HunterRepository() domain.HunterRepository <span class="cov0" title="0">{
+        return g.HunterRepo
+}</span>
+
+func (g *Gateway) MonsterRepository() domain.MonsterRepository <span class="cov0" title="0">{
+        return g.MonsterRepo
+}</span>
+
+func (g *Gateway) ContextWithTx(p context.Context) (ch context.Context, commit, abort context.CancelFunc) <span class="cov0" title="0">{
+        txV := &amp;tx{}
+        ch = context.WithValue(p, txKey{}, txV)
+        var cancel context.CancelFunc
+        ch, cancel = context.WithCancel(ch)
+        go func() </span><span class="cov0" title="0">{
+                select </span>{
+                case &lt;-ch.Done():<span class="cov0" title="0"></span>
+                }
+        }()
+        <span class="cov0" title="0">return ch, func() </span><span class="cov0" title="0">{ txV.Commit(); cancel() }</span>, func() <span class="cov0" title="0">{ txV.Abort(); cancel() }</span>
+}
+
+// Engine returns engine.
+func (g *Gateway) Engine(c context.Context) (*usecase.Engine, context.Context) <span class="cov0" title="0">{
+        eng := usecase.NewEngine(&amp;HunterRepo{}, &amp;MonsterRepo{})
+        eng.EventSubscriber = usecase.NewEventBus(g.EventLogger)
+        return eng, c
+}</span>
+
+// CommitTx is mock
+func (g *Gateway) CommitTx(c context.Context) error <span class="cov0" title="0">{
+        select </span>{
+        case &lt;-c.Done():<span class="cov0" title="0">
+                return errors.New("Tx done")</span>
+        default:<span class="cov0" title="0"></span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+
+type txKey struct{}
+type tx struct {
+        sync.Mutex
+        done bool
+}
+
+func (t *tx) Commit() error <span class="cov0" title="0">{
+        t.Mutex.Lock()
+        defer t.Mutex.Unlock()
+        if t.done </span><span class="cov0" title="0">{
+                return errors.New("DONE")
+        }</span>
+        <span class="cov0" title="0">t.done = true
+        fmt.Println("COMMIT!!")
+        return nil</span>
+}
+func (t *tx) Abort() error <span class="cov0" title="0">{
+        t.Mutex.Lock()
+        defer t.Mutex.Unlock()
+        if t.done </span><span class="cov0" title="0">{
+                return errors.New("DONE")
+        }</span>
+        <span class="cov0" title="0">t.done = true
+        fmt.Println("ABORT")
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package dummy
+
+import (
+        "context"
+        "fmt"
+
+        "github.com/google/uuid"
+        "github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
+)
+
+type HunterRepo struct {
+        repo map[uuid.UUID]*domain.Hunter
+}
+
+func NewHunterRepo() *HunterRepo <span class="cov8" title="1">{
+        return &amp;HunterRepo{repo: map[uuid.UUID]*domain.Hunter{}}
+}</span>
+
+var _ domain.HunterRepository = (*HunterRepo)(nil)
+
+func getTx(ctx context.Context) *tx <span class="cov8" title="1">{
+        txV, ok := ctx.Value(txKey{}).(*tx)
+        if ok </span><span class="cov0" title="0">{
+                fmt.Printf("%v\n", txV)
+                return txV
+        }</span>
+        <span class="cov8" title="1">return &amp;tx{}</span> // default value: like auto commit db
+}
+
+func (hr *HunterRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Hunter, error) <span class="cov8" title="1">{
+        _ = getTx(ctx)
+        if h, ok := hr.repo[id]; ok </span><span class="cov8" title="1">{
+                return h, nil
+        }</span>
+        <span class="cov8" title="1">return nil, &amp;domain.ErrNotFound{ID: id}</span>
+}
+
+func (hr *HunterRepo) Save(ctx context.Context, h *domain.Hunter) error <span class="cov8" title="1">{
+        _ = getTx(ctx)
+        hr.repo[h.ID] = h
+        return nil
+}</span>
+func (hr *HunterRepo) Remove(ctx context.Context, h *domain.Hunter) error <span class="cov8" title="1">{
+        _ = getTx(ctx)
+        delete(hr.repo, h.ID)
+        return nil
+}</span>
+
+type MonsterRepo struct{}
+
+var _ domain.MonsterRepository = (*MonsterRepo)(nil)
+
+func (hr *MonsterRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Monster, error) <span class="cov0" title="0">{
+        _ = getTx(ctx)
+        u, _ := uuid.NewUUID()
+        return &amp;domain.Monster{
+                Name:     "mock monster",
+                ID:       u,
+                Creature: &amp;domain.Creature{Life: 5, AttackPower: 100, DefencePower: 1},
+                Materials: []domain.Material{
+                        {Name: "酒", Rarity: 100},
+                        {Name: "米", Rarity: 1000},
+                },
+        }, nil
+}</span>
+
+func (hr *MonsterRepo) Save(ctx context.Context, _ *domain.Monster) error <span class="cov0" title="0">{
+        _ = getTx(ctx)
+        return nil
+}</span>
+func (hr *MonsterRepo) Remove(ctx context.Context, _ *domain.Monster) error <span class="cov0" title="0">{
+        _ = getTx(ctx)
+        return nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package domain
+
+// Creature roles as huger or monster in the game world.
+type Creature struct {
+        Life         int `json:"life"`
+        Damage       int `json:"damage"`
+        AttackPower  int `json:"attack_power"`
+        DefencePower int `json:"defence_power"`
+}
+
+// IsLife means the creature is life or not.
+func (c *Creature) IsLife() bool <span class="cov8" title="1">{
+        return c.Life &gt; c.Damage
+}</span>
+
+// DefendFrom means the creature defend an attack from other creature.
+func (c *Creature) DefendFrom(other *Creature) (rest int, isLife bool) <span class="cov0" title="0">{
+        c.Damage += other.AttackPower - c.DefencePower
+        rest = max(c.Life-c.Damage, 0)
+        return rest, rest &gt; 0
+}</span>
+
+// AttackTo means the creature attacks to other creature.
+func (c *Creature) AttackTo(other *Creature) (rest int, killed bool) <span class="cov0" title="0">{
+        rest, isLife := other.DefendFrom(c)
+        return rest, !isLife
+}</span>
+
+func max(a, b int) int <span class="cov0" title="0">{
+        if a &lt; b </span><span class="cov0" title="0">{
+                return b
+        }</span>
+        <span class="cov0" title="0">return a</span>
+}
+
+// CreatureRace is used generating a creature with template.
+type CreatureRace struct {
+        BaseCreature Creature
+        GrowthRates  Creature
+}
+
+// NewCreature generate a creature with level.
+func (mr *CreatureRace) NewCreature(level int) *Creature <span class="cov8" title="1">{
+        child := &amp;Creature{}
+        *child = mr.BaseCreature
+        child.Life += mr.GrowthRates.Life * level
+        child.AttackPower += mr.GrowthRates.AttackPower * level
+        child.DefencePower += mr.GrowthRates.DefencePower * level
+        return child
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package domain
+
+import (
+        "fmt"
+
+        "github.com/google/uuid"
+)
+
+type ErrNotFound struct{ ID uuid.UUID }
+
+func (e *ErrNotFound) Error() string <span class="cov0" title="0">{ return fmt.Sprintf("not found %s", e.ID.String()) }</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package domain
+
+import (
+        "fmt"
+
+        "github.com/google/uuid"
+)
+
+// Hunter is a player or a NPC.
+type Hunter struct {
+        *Creature
+
+        ID        uuid.UUID  `json:"huter_id"`
+        Name      string     `json:"name"`
+        Materials []Material `json:"materials"`
+}
+
+var humanBase = Creature{
+        Life:         100,
+        AttackPower:  100,
+        DefencePower: 100,
+}
+
+var emptyItems = []Material{}
+
+func (h *Hunter) AttackTo(m *Monster) (profits []Material, killed bool) <span class="cov0" title="0">{
+        _, killed = h.Creature.AttackTo(m.Creature)
+        if !killed </span><span class="cov0" title="0">{
+                return emptyItems, killed
+        }</span>
+        <span class="cov0" title="0">profits = m.Materials
+        if profits == nil </span><span class="cov0" title="0">{
+                profits = emptyItems
+        }</span>
+        <span class="cov0" title="0">return profits, killed</span>
+}
+
+// NewStandardHunter returns a hunter.
+func NewStandardHunter(name string) (*Hunter, error) <span class="cov0" title="0">{
+        id, e := uuid.NewRandom()
+        if e != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("fail to generate hunter id: %w", e)
+        }</span>
+        <span class="cov0" title="0">c := humanBase
+        return &amp;Hunter{
+                ID:       id,
+                Name:     name,
+                Creature: &amp;c,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package domain
+
+import (
+        "fmt"
+
+        "github.com/google/uuid"
+)
+
+// Monster is a NPC is player's target.
+type Monster struct {
+        *Creature
+
+        ID        uuid.UUID  `json:"huter_id"`
+        Name      string     `json:"name"`
+        Materials []Material `json:"hunted_materials"`
+}
+
+// NewMonster returns a monster.
+func NewMonster(name string) (*Monster, error) <span class="cov0" title="0">{
+        id, e := uuid.NewRandom()
+        if e != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("fail to generate Monster id: %w", e)
+        }</span>
+        <span class="cov0" title="0">return &amp;Monster{ID: id, Name: name}, nil</span>
+}
+
+// MonsterFactory returns monster of race.s
+func MonsterFactory(name string, level int, race CreatureRace) (*Monster, error) <span class="cov0" title="0">{
+        m, e := NewMonster(name)
+        if e != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("fail to create monster with %w", e)
+        }</span>
+        <span class="cov0" title="0">m.Creature = race.NewCreature(level)
+        return m, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

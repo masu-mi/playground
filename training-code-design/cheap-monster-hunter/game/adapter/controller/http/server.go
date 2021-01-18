@@ -10,35 +10,43 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/usecase"
 )
 
 type applicationHandler struct {
 	*mux.Router
+	gw  gateway.TransactionalGateway
 	eng *usecase.Engine
 }
 
 // NewHTTPHandler retunrs http.Handler to usecase.
-func NewHTTPHandler(eng *usecase.Engine) http.Handler {
+func NewHTTPHandler(gw gateway.TransactionalGateway) http.Handler {
 	r := &applicationHandler{
 		Router: mux.NewRouter().StrictSlash(true),
-		eng:    eng,
+		gw:     gw,
+		eng: &usecase.Engine{
+			HunterRepository:  gw.HunterRepository(),
+			MonsterRepository: gw.MonsterRepository(),
+		},
 	}
 	r.Router.HandleFunc("/attack/{hunter_id}/{monster_id}", r.attackByIDs)
 	return r
 }
 
 func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request) {
-	ctx, c := context.WithTimeout(r.Context(), 1000*time.Millisecond)
-	defer c()
+	ctx, cancel := context.WithTimeout(r.Context(), 1000*time.Millisecond)
+	defer cancel()
+	// context, Commit/Abort
+	ctx, commit, abort := ah.gw.ContextWithTx(ctx)
+	defer commit()
 
 	vars := mux.Vars(r)
 	var hunter *domain.Hunter
 	{
 		hunterID, err := getUUID(vars, "hunter_id")
 		if err != nil {
-			// Abort Tx
 			reportFailToParse(w, "hunter_id", vars["hunter_id"])
 			return
 		}
@@ -50,6 +58,7 @@ func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
+			abort()
 			return
 		}
 	}
@@ -69,31 +78,22 @@ func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
+			abort()
 			return
 		}
 	}
 
-	// Begin Tx
 	profit, err := ah.eng.AttackByHunterWithContext(ctx, hunter, monster)
 	if err != nil {
-		// Abort Tx
 		errNotFound := &domain.ErrNotFound{}
 		if errors.As(err, &errNotFound) {
 			reportNotFoundError(w, "entity", errNotFound)
 		} else {
 			reportFailToParse(w, "key", "value")
 		}
+		abort()
 		return
 	}
-	select {
-	case <-ctx.Done():
-		ctxErr := ctx.Err()
-		if ctxErr == context.Canceled || ctxErr == context.DeadlineExceeded {
-			reportCanceled(w) // not received
-			// Abort Tx
-		}
-	}
-	// Commit Tx
 	reportProfit(w, profit)
 }
 

@@ -30,4 +30,41 @@ Vagrant.configure("2") do |config|
     host.vm.network "private_network", ip: "10.0.1.11",
         virtualbox__intnet: "kub-test"
   end
+  config.vm.define "test-k3s" do |host|
+    # host.vm.box = "ubuntu/bionic64"
+    host.vm.box = "ubuntu/groovy64"
+    host.vm.hostname = "test-k3s"
+    host.disksize.size = '140GB'
+
+    host.vm.network "public_network"
+    host.vm.network "private_network", ip: "10.0.1.12",
+        virtualbox__intnet: "kub-test"
+
+    host.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--uart1", "0x3f8", "4"]
+      # ref. https://www.virtualbox.org/manual/ch03.html#serialports
+      v.customize ["modifyvm", :id, "--uartmode1", "file", "/tmp/#{host.vm.hostname}_com"]
+      v.memory = 4096
+    end
+    host.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+
+      apt-get install llvm clang gcc-bpf
+      apt-get install libbpf-dev
+      apt-get install \
+        gawk wget git diffstat unzip texinfo \
+        gcc-multilib chrpath socat xterm \
+        lzop kmod libsdl1.2-dev \
+        build-essential flex \
+        libelf-dev libncurses5-dev
+      apt-get install \
+        bison flex libelf1 binutils-dev \
+        libreadline-dev
+      apt-get install systemtap-sdt-dev
+      apt-get install libbpfcc libbpfcc-dev
+      apt-get install bpfcc-tools \
+        python3-bpfcc bpfcc-lua
+      apt-get install bpftrace
+    SHELL
+  end
 end
