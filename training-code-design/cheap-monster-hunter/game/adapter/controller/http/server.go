@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,21 +13,23 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
-	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/usecase"
+	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/service"
 )
 
 type applicationHandler struct {
 	*mux.Router
 	gw  gateway.TransactionalGateway
-	eng *usecase.Engine
+	eng *service.Engine
+	// Logger is hook point of internal logs.
+	Logger *log.Logger
 }
 
 // NewHTTPHandler retunrs http.Handler to usecase.
-func NewHTTPHandler(gw gateway.TransactionalGateway) http.Handler {
+func NewHTTPHandler(gw gateway.TransactionalGateway) *applicationHandler {
 	r := &applicationHandler{
 		Router: mux.NewRouter().StrictSlash(true),
 		gw:     gw,
-		eng: &usecase.Engine{
+		eng: &service.Engine{
 			HunterRepository:  gw.HunterRepository(),
 			MonsterRepository: gw.MonsterRepository(),
 		},
@@ -36,9 +39,11 @@ func NewHTTPHandler(gw gateway.TransactionalGateway) http.Handler {
 }
 
 func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request) {
+	ah.logf("[START] attackByIDs()")
+	defer ah.logf("[END] attackByIDs()")
 	ctx, cancel := context.WithTimeout(r.Context(), 1000*time.Millisecond)
 	defer cancel()
-	// context, Commit/Abort
+	// do Commit/Abort
 	ctx, commit, abort := ah.gw.ContextWithTx(ctx)
 	defer commit()
 
@@ -95,6 +100,17 @@ func (ah *applicationHandler) attackByIDs(w http.ResponseWriter, r *http.Request
 		return
 	}
 	reportProfit(w, profit)
+}
+
+func (ah *applicationHandler) SetLogger(l *log.Logger) {
+	ah.Logger = l
+}
+
+func (ah *applicationHandler) logf(format string, v ...interface{}) {
+	if ah.Logger == nil {
+		return
+	}
+	ah.Logger.Printf(format, v...)
 }
 
 func reportProfit(w http.ResponseWriter, profit []domain.Material) {

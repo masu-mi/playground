@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"context"
@@ -22,7 +22,6 @@ var _ AttackByUnterUsecase = (*Engine)(nil)
 type Engine struct {
 	domain.HunterRepository
 	domain.MonsterRepository
-	EventSubscriber
 }
 
 // NewEngine returns usecase engine.
@@ -42,18 +41,6 @@ func (eg *Engine) AttackByHunterWithContext(ctx context.Context, h *domain.Hunte
 	defer logf("[DEBUG]  END AttackByHunter: Hunter(%s), Monster(%s)", h.ID, m.ID)
 
 	var killed bool
-	defer func() {
-		if eg.EventSubscriber == nil {
-			return
-		}
-		eg.EventSubscriber.Receive(&EventAttack{
-			Killed:  killed,
-			Hunter:  h,
-			Monster: m,
-			Err:     err,
-		})
-	}()
-
 	profits, killed = h.AttackTo(m)
 	if killed {
 		h.Materials = append(h.Materials, profits...)

@@ -8,15 +8,13 @@ import (
 
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/adapter/gateway"
 	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain"
-	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/usecase"
+	"github.com/masu-mi/playground/training-code-design/cheap-monster-hunter/game/domain/service"
 )
 
 // Gateway is Engine factory.
 type Gateway struct {
 	*HunterRepo
 	*MonsterRepo
-
-	EventLogger usecase.EventSubscriber
 }
 
 var _ gateway.TransactionalGateway = (*Gateway)(nil)
@@ -43,9 +41,8 @@ func (g *Gateway) ContextWithTx(p context.Context) (ch context.Context, commit, 
 }
 
 // Engine returns engine.
-func (g *Gateway) Engine(c context.Context) (*usecase.Engine, context.Context) {
-	eng := usecase.NewEngine(&HunterRepo{}, &MonsterRepo{})
-	eng.EventSubscriber = usecase.NewEventBus(g.EventLogger)
+func (g *Gateway) Engine(c context.Context) (*service.Engine, context.Context) {
+	eng := service.NewEngine(&HunterRepo{}, &MonsterRepo{})
 	return eng, c
 }
 
