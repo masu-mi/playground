@@ -1,0 +1,7 @@
+---
+x: XXX
+y: &anc
+  test: "hoge"
+yy:
+  <<: *anc
+z: [200, 300, 400]
