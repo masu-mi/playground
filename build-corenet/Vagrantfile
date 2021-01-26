@@ -1,0 +1,48 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.define "test-lte" do |host|
+    # host.vm.box = "ubuntu/bionic64"
+    host.vm.box = "ubuntu/groovy64"
+    host.vm.hostname = "test-lte"
+
+    host.vm.network "private_network", ip: "10.0.1.20",
+        virtualbox__intnet: "test-corenet"
+
+    host.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--uart1", "0x3f8", "4"]
+      # ref. https://www.virtualbox.org/manual/ch03.html#serialports
+      v.customize ["modifyvm", :id, "--uartmode1", "file", "/tmp/#{host.vm.hostname}_com"]
+      v.memory = 4096
+    end
+    host.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+
+      apt-get install -y cmake \
+        libfftw3-dev libmbedtls-dev libboost-program-options-dev \
+        libconfig++-dev libsctp-dev g++ g++-10
+    SHELL
+  end
+
+  config.vm.define "test-enb" do |host|
+    # host.vm.box = "ubuntu/bionic64"
+    host.vm.box = "ubuntu/xenial64"
+    host.vm.hostname = "test-enb"
+
+    host.vm.network "private_network", ip: "10.0.1.10",
+        virtualbox__intnet: "test-corenet"
+
+    host.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--uart1", "0x3f8", "4"]
+      # ref. https://www.virtualbox.org/manual/ch03.html#serialports
+      v.customize ["modifyvm", :id, "--uartmode1", "file", "/tmp/#{host.vm.hostname}_com"]
+      v.memory = 4096
+    end
+    host.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+
+      apt-get install -y cmake \
+        libfftw3-dev libmbedtls-dev libboost-program-options-dev \
+        libconfig++-dev libsctp-dev
+    SHELL
+  end
+end
