@@ -278,7 +278,7 @@
 					},
 				},
 				env: {
-					"_/Users/masumi/works/playground/examples/tinygo/test-wasm.add": (x, y) => {
+					"_/Users/masumi/works/playground/examples/go-wasm/inbrowser/main.add": (x, y) => {
 						return x + y;
 					},
 					// func ticks() float64
