@@ -7,7 +7,7 @@ joblib==0.15.1
 mypy==0.780
 mypy-extensions==0.4.3
 networkx==2.4
-numpy==1.18.4
+numpy==1.22.0
 pandas==1.0.4
 PuLP==2.1
 pydantic==1.5.1
