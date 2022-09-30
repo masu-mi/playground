@@ -3,7 +3,7 @@ decorator==4.4.2
 fastapi==0.55.1
 h11==0.9.0
 httptools==0.1.1
-joblib==0.15.1
+joblib==1.2.0
 mypy==0.780
 mypy-extensions==0.4.3
 networkx==2.4
