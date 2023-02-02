@@ -114,7 +114,7 @@ typing-extensions==3.7.2
 urllib3==1.26.5
 wcwidth==0.1.7
 webencodings==0.5.1
-Werkzeug==0.15.3
+Werkzeug==0.15.5
 widgetsnbextension==3.4.2
 xgboost==0.90
 zict==0.1.3
